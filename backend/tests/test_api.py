@@ -34,9 +34,9 @@ def make_fake(answers):
             return answers[pid][idx]
         if system_prompt == prompts.JUDGE_SYSTEM:
             return "VERDICT: NO\nREASON: They differ."
-        if system_prompt == prompts.SYNTHESIS_SYSTEM:
+        if system_prompt in (prompts.SYNTHESIS_SYSTEM, prompts.CHAD_SYNTHESIS_SYSTEM):
             return "UNIFIED ANSWER"
-        if system_prompt == prompts.MODERATOR_SYSTEM:
+        if system_prompt in (prompts.MODERATOR_SYSTEM, prompts.CHAD_MODERATOR_SYSTEM):
             return "MODERATED ANSWER"
         raise AssertionError(f"unexpected system prompt: {system_prompt!r}")
 
@@ -148,6 +148,35 @@ class ApiTests(unittest.TestCase):
         # Single survivor short-circuits to consensus.
         self.assertEqual(events[-2]["type"], "consensus")
         self.assertTrue(events[-2]["converged"])
+
+    def test_debate_chad_flag_reaches_engine(self):
+        """A truthy `chad` in the body is forwarded to run_debate."""
+        captured = {}
+        original = main.run_debate
+
+        def spy(query, participants, keys, chad=False):
+            captured["chad"] = chad
+            return original(query, participants, keys, chad=chad)
+
+        same = answer("Monitor X is the best.")
+        fake = make_fake({
+            f"openai:{PROVIDERS['openai'].default_model}": [same],
+            f"anthropic:{PROVIDERS['anthropic'].default_model}": [same],
+        })
+        with mock.patch.object(main, "run_debate", side_effect=spy), \
+             mock.patch("app.debate.call_model", new=fake):
+            events = stream_events(
+                self.client,
+                {
+                    "query": "Best monitor?",
+                    "participants": [{"provider": "openai"}, {"provider": "anthropic"}],
+                    "chad": True,
+                },
+                {"x-api-key-openai": "k1", "x-api-key-anthropic": "k2"},
+            )
+        self.assertTrue(captured["chad"])
+        self.assertTrue(events[-2]["converged"])
+        self.assertEqual(events[-2]["content"], "UNIFIED ANSWER")
 
     def test_debate_rejects_dead_model(self):
         r = self.client.post(

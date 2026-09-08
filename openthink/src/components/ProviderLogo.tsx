@@ -46,7 +46,7 @@ export default function ProviderLogo({ id, name, size = 36, bare = false }: Prop
 
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-lg border border-neutral-800 bg-[#141414]"
+      className="flex shrink-0 items-center justify-center rounded-lg border border-edge bg-inset"
       style={{ width: size, height: size }}
       title={name}
     >

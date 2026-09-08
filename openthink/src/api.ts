@@ -94,6 +94,7 @@ export async function streamDebate(
   apiKeys: Record<ProviderId, string>,
   onEvent: (event: DebateEvent) => void,
   signal?: AbortSignal,
+  chad = false,
 ): Promise<void> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   // One key per provider, shared by all of its participants.
@@ -109,7 +110,7 @@ export async function streamDebate(
     response = await fetch(`${API_BASE}/debate`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ query, participants }),
+      body: JSON.stringify({ query, participants, chad }),
       signal: signal ?? null,
     });
   } catch (err) {

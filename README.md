@@ -45,11 +45,18 @@ You: "Is Dune a good book for someone who liked Foundation?"
 |---|---|
 | 🔀 **10 AI providers** | ChatGPT, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Mistral, Groq & OpenRouter — mix any subset |
 | ⚡ **Parallel rounds** | All models answer simultaneously via `asyncio.gather` — the debate is as fast as the slowest model, not the sum |
-| ⚖️ **Rotating judge** | A different model evaluates consensus each round, with failover to a backup judge |
+| ⚖️ **Rotating judge** | A different model evaluates consensus each round, with failover to a backup judge — and a conservative bias: *if in doubt, rule NO* (a false consensus is worse than one more round) |
+| 🛡️ **Anti-conformity debate** | Models are instructed to concede **only** to demonstrably superior evidence — never just to end the debate; a lone dissenter with standing arguments must defend them (majority pressure is not evidence) |
 | 🆓 **Zero-cost fast path** | Identical positions converge instantly — no extra API calls spent |
 | 🏳️ **Honest concessions** | Models must declare `CONCEDED to X` / `MAINTAINED` / `REVISED` — visible in the timeline |
 | 🛑 **Stall detection** | If nobody changes their mind, the debate skips straight to the Moderator instead of burning tokens |
+| 🎯 **Holdout early-exit** | If everyone agrees except one dissenter who didn't budge, the debate skips the remaining rounds and goes straight to the Moderator |
+| 🗳️ **Voting landscape** | The Moderator receives a structured per-position breakdown — support count and stability in rounds (CONSENSAGENT-inspired) — as context, never as a binding vote |
 | 🧑‍⚖️ **Moderator failsafe** | Hard 3-round cap; the Moderator weighs the full position trajectory and decides |
+| 💪 **Chad Mode** | Optional switch: the final answer is distilled to a blunt, definitive verdict — no nuance, no "it depends". Visible toggle right in the chat |
+| 🌐 **Bilingual UI** | Full Spanish/English interface, auto-detected from the browser |
+| 🌙 **Light & dark themes** | CSS-variable theming, persisted, no reload flash |
+| 🔗 **Share on X** | One click posts the verdict (≤280 chars, Chad-aware) via the X web intent |
 | 🔑 **Bring your own keys** | Keys live only in browser memory for the session — never in localStorage, never on a server |
 | 🎨 **Minimalist dark UI** | ChatGPT-inspired interface with a live debate timeline, SSE streaming, and keyboard shortcuts |
 | 🧪 **Battle-tested engine** | The orchestration core ships with end-to-end mocked tests |
@@ -112,14 +119,16 @@ pnpm dev            # → http://localhost:5173 (proxies /api → :8000)
 flowchart TD
     Q[User query] --> R1["<b>Round 1 — Independent generation</b><br/>all models answer in parallel,<br/>each ends with FINAL POSITION:"]
     R1 --> FP{"<b>Fast path</b><br/>all positions identical<br/>after normalization?"}
-    FP -- yes --> SYN["<b>Synthesis</b><br/>unified markdown answer"]
-    FP -- no --> J{"<b>Rotating judge</b><br/>a different model each round<br/>rules VERDICT: YES/NO + reason"}
+    FP -- yes --> SYN["<b>Synthesis</b><br/>unified markdown answer<br/>(blunt verdict in Chad Mode)"]
+    FP -- no --> J{"<b>Rotating judge</b><br/>a different model each round<br/>rules VERDICT: YES/NO + reason<br/><i>if in doubt, rule NO</i>"}
     J -- "YES · consensus" --> SYN
     J -- "NO · divergent" --> S{"<b>Stall check</b><br/>did any position change?"}
     S -- "no · debate frozen" --> MOD
-    S -- yes --> RN["<b>Debate round</b><br/>each model sees everyone's arguments<br/>under the objective-analytical-engine prompt:<br/><i>'If their logic is superior, you MUST concede'</i><br/>+ STANCE: CONCEDED / MAINTAINED / REVISED"]
+    S -- yes --> H{"<b>Holdout check</b><br/>all agree except one<br/>entrenched dissenter?"}
+    H -- yes --> MOD
+    H -- no --> RN["<b>Debate round</b><br/>each model sees everyone's arguments<br/>under the anti-conformity prompt:<br/><i>'concede ONLY to demonstrably superior evidence'</i><br/>+ STANCE: CONCEDED / MAINTAINED / REVISED"]
     RN -- "round ≤ 3" --> FP
-    RN -- "round cap reached" --> MOD["<b>Moderator</b><br/>weighs the full position trajectory<br/>and synthesizes the best compromise"]
+    RN -- "round cap reached" --> MOD["<b>Moderator</b><br/>weighs the position trajectory +<br/>support & stability breakdown<br/>and synthesizes the best compromise"]
     SYN --> C["✅ <b>Consensus</b> — converged: true"]
     MOD --> NC["🤝 <b>Best compromise</b> — converged: false"]
 ```
@@ -127,9 +136,10 @@ flowchart TD
 | Phase | What happens |
 |---|---|
 | **1. Independent generation** | All active models answer simultaneously, each ending with a `FINAL POSITION:` line. |
-| **2. Consensus check** | Zero-cost fast path first: identical normalized positions converge instantly. Otherwise a **rotating judge** (a different model each round, with failover to a backup) decides YES/NO with a cited reason. |
-| **3. Debate rounds** | Each model receives the others' arguments under an objective-analytical-engine system prompt ("If their logic, facts, or recommendations are superior, you MUST concede…") and declares a `STANCE:` line — `CONCEDED to X`, `MAINTAINED`, or `REVISED` — shown as a pill in the timeline. |
-| **4. Convergence & failsafe** | Hard cap of 3 rounds, plus **stall detection**: if no position changes in a round, the debate jumps straight to the Moderator, which synthesizes a compromise from the full position trajectory (clearly flagged as non-unanimous). |
+| **2. Consensus check** | Zero-cost fast path first: identical normalized positions converge instantly. Otherwise a **rotating judge** (a different model each round, with failover to a backup) decides YES/NO with a cited reason. The judge is deliberately **conservative**: *if in doubt, rule NO* — a false consensus is worse than one more debate round. |
+| **3. Debate rounds** | Each model receives the others' arguments under an **anti-conformity** system prompt: concede *only* to demonstrably superior evidence, never just to end the debate; a lone dissenter whose arguments still stand must defend them with facts (majority pressure is not evidence). Each answer declares a `STANCE:` line — `CONCEDED to X`, `MAINTAINED`, or `REVISED` — shown as a pill in the timeline. |
+| **4. Early exits** | Hard cap of 3 rounds, plus two cheap detectors: **stall detection** (no position changed → straight to the Moderator) and the **holdout check** (everyone agrees except one dissenter who didn't move → another round would only repeat majority pressure, so the Moderator takes over). |
+| **5. Moderator failsafe** | The Moderator weighs the full position trajectory plus a structured **voting landscape** — per-position support count and stability in rounds, inspired by CONSENSAGENT's consistency weighting. It is context, never a binding vote: evidence quality decides. The compromise is clearly flagged as non-unanimous. |
 
 Provider failures are isolated: a model that errors or lacks a key drops out, and the debate continues with the survivors.
 
@@ -143,16 +153,19 @@ openthink/
 │   │   ├── main.py               # Routes, CORS, rate limiting, security headers
 │   │   ├── schemas.py            # Pydantic request validation
 │   │   ├── providers.py          # Async adapters for the 10 LLM providers (raw httpx, no SDKs)
-│   │   ├── prompts.py            # Initial / Debate / Judge / Synthesis / Moderator prompts
+│   │   ├── prompts.py            # Initial / Debate / Judge / Synthesis / Moderator prompts (+ Chad variants)
 │   │   └── debate.py             # The debate engine (async SSE generator)
 │   └── tests/
-│       └── test_debate.py        # End-to-end engine tests with a mocked provider layer
+│       ├── test_debate.py        # End-to-end engine tests with a mocked provider layer
+│       └── test_api.py           # HTTP-level integration tests (FastAPI TestClient)
 └── openthink/                    # React 19 + TypeScript + Vite + Tailwind v3 + Zustand
     └── src/
-        ├── store.ts              # Zustand: persisted settings slice + debate reducer
+        ├── store.ts              # Zustand: persisted settings (theme, language, Chad Mode) + debate reducer
         ├── api.ts                # SSE-over-fetch streaming client
         ├── types.ts              # ProviderId, DebateRound, SSE event types
-        └── components/           # InputBar, SettingsDrawer, ConsensusView,
+        ├── i18n.ts               # Dependency-free ES/EN dictionaries + useT() hook
+        ├── share.ts              # Tweet composer for the X web intent (≤280 chars)
+        └── components/           # InputBar, SettingsDrawer, ConsensusView, ChadToggle,
                                   # DebateTimeline, LoadingState, ModelChips
 ```
 
@@ -163,9 +176,11 @@ openthink/
 | `/api/health` | GET | `{"status": "ok"}` |
 | `/api/providers` | GET | Dynamic provider registry: `{"providers": [{"id", "name", "default_model", "models"}]}` |
 | `/api/validate` | POST | Tests one key. Body `{"provider": "<id>", "model"?}`, key in `x-api-key-<id>` header. Always 200 with `{"ok", "latency_ms"/"error"}` |
-| `/api/debate` | POST | `text/event-stream`. Body `{"query", "participants": [{"provider": "xai", "model": "grok-4.6"}, …]}`; keys via `x-api-key-<provider>` headers |
+| `/api/debate` | POST | `text/event-stream`. Body `{"query", "participants": [{"provider": "xai", "model": "grok-4.6"}, …], "chad"?}`; keys via `x-api-key-<provider>` headers |
 
 > 🧩 **Participants, not providers**: each participant is a `(provider, model)` pair, so a debate can pit **several models of the same company** against each other (e.g. `grok-4.5` vs `grok-4.6`). Identical pairs are deduplicated; participants sharing a provider share its API key.
+
+> 💪 **`chad: true`** (optional, default `false`): the final synthesis/moderation switches to **Chad Mode** — a blunt, definitive verdict in as few words as possible, with zero hedging, in the language of the question.
 
 **SSE event flow:**
 
@@ -201,7 +216,7 @@ cd backend
 python -m unittest discover tests -v
 ```
 
-Covers: zero-cost consensus, concession flow with STANCE parsing, stall → Moderator shortcut, judge rotation, missing keys, and single-survivor short-circuit. Frontend: `pnpm lint` + `pnpm build` (type-check).
+Covers: zero-cost consensus, concession flow with STANCE parsing, stall → Moderator shortcut, entrenched-holdout early exit, judge rotation, the Moderator's voting-landscape payload, anti-conformity and conservative-judge prompt guardrails, Chad Mode prompt switching, missing keys, and single-survivor short-circuit. Frontend: `pnpm lint` + `pnpm build` (type-check).
 
 ## 🤝 Contributing
 

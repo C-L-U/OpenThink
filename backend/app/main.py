@@ -138,7 +138,7 @@ async def debate(body: DebateRequest, request: Request) -> StreamingResponse:
         dict.fromkeys((p.provider, resolve_model(p.provider, p.model)) for p in body.participants)
     )
     return StreamingResponse(
-        run_debate(body.query, participants, keys),
+        run_debate(body.query, participants, keys, chad=body.chad),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

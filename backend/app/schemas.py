@@ -48,6 +48,10 @@ class DebateRequest(BaseModel):
         max_length=16,
         description="Debate participants (provider + model). Identical pairs are deduplicated.",
     )
+    chad: bool = Field(
+        default=False,
+        description="Chad mode: the final answer becomes a blunt, definitive verdict with zero hedging.",
+    )
 
 
 class ValidateRequest(BaseModel):

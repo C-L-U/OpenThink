@@ -5,8 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenThink</title>
+    <script>
+      // Apply the persisted theme before first paint to avoid a flash
+      // (document.body does not exist yet here, so style the root element).
+      try {
+        var stored = JSON.parse(localStorage.getItem('openthink-settings') || '{}');
+        var light = !!(stored && stored.state && stored.state.theme === 'light');
+        if (light) document.documentElement.classList.add('light');
+        document.documentElement.style.background = light ? '#fafafa' : '#171717';
+      } catch (e) {
+        document.documentElement.style.background = '#171717';
+      }
+    </script>
   </head>
-  <body style="background: #171717">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

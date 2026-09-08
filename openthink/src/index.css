@@ -26,6 +26,29 @@
   }
 }
 
+/* Theme tokens as raw RGB channels so Tailwind can apply opacity modifiers. */
+:root {
+  --c-bg: 23 23 23;        /* #171717 */
+  --c-panel: 27 27 27;     /* #1b1b1b */
+  --c-inset: 20 20 20;     /* #141414 */
+  --c-raised: 47 47 47;    /* #2f2f2f */
+  --c-edge: 38 38 38;      /* neutral-800 */
+  --c-text: 244 244 245;   /* zinc-100 */
+  --c-muted: 161 161 170;  /* zinc-400 */
+  --c-faint: 82 82 91;     /* zinc-600 */
+}
+
+:root.light {
+  --c-bg: 250 250 250;
+  --c-panel: 255 255 255;
+  --c-inset: 244 244 245;
+  --c-raised: 228 228 231;
+  --c-edge: 212 212 216;
+  --c-text: 24 24 27;
+  --c-muted: 82 82 91;
+  --c-faint: 161 161 170;
+}
+
 html,
 body,
 #root {
@@ -33,13 +56,15 @@ body,
 }
 
 body {
-  @apply bg-[#171717] text-neutral-200 font-sans antialiased;
+  @apply font-sans antialiased;
+  background-color: rgb(var(--c-bg));
+  color: rgb(var(--c-text));
 }
 
 /* Minimal scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: rgb(var(--c-faint)) transparent;
 }
 *::-webkit-scrollbar {
   width: 5px;
@@ -49,9 +74,9 @@ body {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: rgb(var(--c-faint));
   border-radius: 3px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: rgb(var(--c-muted));
 }

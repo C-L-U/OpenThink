@@ -13,11 +13,24 @@ const defaultParticipants = (): ParticipantId[] =>
 const emptyKeys = (): Record<ProviderId, string> =>
   Object.fromEntries(ALL_PROVIDERS.map((id) => [id, '']));
 
+export type Theme = 'dark' | 'light';
+export type Language = 'es' | 'en';
+
+/** Detect the browser's preferred language once (Spanish vs. English). */
+const detectLanguage = (): Language =>
+  typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('es')
+    ? 'es'
+    : 'en';
+
 interface SettingsState {
   apiKeys: Record<ProviderId, string>;
   /** Debate roster: "provider:model" entries; several may share a provider. */
   participants: ParticipantId[];
   settingsOpen: boolean;
+  theme: Theme;
+  language: Language;
+  /** Chad mode: final answers become blunt, definitive verdicts. */
+  chadMode: boolean;
   setApiKey: (id: ProviderId, key: string) => void;
   clearApiKeys: () => void;
   /** Toggle one participant (provider + model variant) in/out of the debate. */
@@ -26,6 +39,9 @@ interface SettingsState {
    *  enabling adds its default model back. */
   toggleProvider: (id: ProviderId) => void;
   setSettingsOpen: (open: boolean) => void;
+  setTheme: (theme: Theme) => void;
+  setLanguage: (language: Language) => void;
+  setChadMode: (on: boolean) => void;
 }
 
 interface RegistryState {
@@ -110,6 +126,9 @@ export const useStore = create<OpenThinkState>()(
       apiKeys: emptyKeys(),
       participants: defaultParticipants(),
       settingsOpen: false,
+      theme: 'dark',
+      language: detectLanguage(),
+      chadMode: false,
       setApiKey: (id, key) =>
         set((s) => {
           // Editing a key invalidates its previous test result.
@@ -139,6 +158,9 @@ export const useStore = create<OpenThinkState>()(
           return { participants: [...s.participants, makeParticipant(id, model)] };
         }),
       setSettingsOpen: (open) => set({ settingsOpen: open }),
+      setTheme: (theme) => set({ theme }),
+      setLanguage: (language) => set({ language }),
+      setChadMode: (on) => set({ chadMode: on }),
 
       // ---- provider registry slice ----
       providers: PROVIDERS,
@@ -166,7 +188,7 @@ export const useStore = create<OpenThinkState>()(
       ...initialDebateState,
 
       startDebate: async (query) => {
-        const { participants, apiKeys, status } = get();
+        const { participants, apiKeys, status, chadMode } = get();
         const trimmed = query.trim();
         if (!trimmed || status === 'running' || participants.length === 0) return;
         const payload = participants.map((pid) => parseParticipant(pid));
@@ -179,6 +201,7 @@ export const useStore = create<OpenThinkState>()(
             apiKeys,
             (event) => get().applyEvent(event),
             controller.signal,
+            chadMode,
           );
           // Stream ended; if we never saw done/consensus, close out gracefully.
           set((s) => (s.status === 'running' ? { status: 'done' } : s));
@@ -317,10 +340,13 @@ export const useStore = create<OpenThinkState>()(
     }),
     {
       name: 'openthink-settings',
-      version: 1,
+      version: 2,
       // API keys are session-only: never written to nor restored from localStorage.
       partialize: (s) => ({
         participants: s.participants,
+        theme: s.theme,
+        language: s.language,
+        chadMode: s.chadMode,
       }),
       migrate: (persisted, version) => {
         // v0 -> v1: {activeModels: ProviderId[], selectedModels: {id: model}}
@@ -343,6 +369,8 @@ export const useStore = create<OpenThinkState>()(
             return { participants };
           }
         }
+        // v1 -> v2: persisted data gained theme/language; keep participants and
+        // let the merge below fill the new fields with their defaults.
         return persisted as { participants: ParticipantId[] };
       },
       merge: (persisted, current) => ({

@@ -1,4 +1,5 @@
 import { useStore } from '../store';
+import { useT } from '../i18n';
 import { lookupProvider, parseParticipant, providerColor, shortModel } from '../types';
 
 export default function LoadingState() {
@@ -9,7 +10,9 @@ export default function LoadingState() {
   const participants = useStore((s) => s.participants);
   const providers = useStore((s) => s.providers);
   const moderatorInvoked = useStore((s) => s.moderatorInvoked);
+  const chadMode = useStore((s) => s.chadMode);
   const stopDebate = useStore((s) => s.stopDebate);
+  const t = useT();
 
   if (status !== 'running') return null;
 
@@ -21,26 +24,34 @@ export default function LoadingState() {
   const awaitingJudge =
     !moderatorInvoked && current !== undefined && pending.length === 0 && !current.evaluation;
   const phase = moderatorInvoked
-    ? 'Moderator is synthesizing the best compromise'
+    ? t('loading.moderating')
     : awaitingJudge
-      ? 'Judge is evaluating positions'
+      ? t('loading.judging')
       : currentRound <= 1
-        ? `Querying ${participants.length} AIs — gathering independent answers`
-        : `AIs are debating… Round ${currentRound}/${maxRounds}`;
+        ? t('loading.gathering', { n: participants.length })
+        : t('loading.debating', { current: currentRound, max: maxRounds });
 
   const participantLabel = (pid: string) => {
     const { provider, model } = parseParticipant(pid);
     return `${lookupProvider(providers, provider).name} · ${shortModel(model)}`;
   };
 
+  // Chad mode swaps the progress dots to a hotter amber→red gradient.
+  const dotGradient = chadMode ? 'from-amber-400 to-red-400' : 'from-emerald-400 to-cyan-400';
+
   return (
     <div className="flex flex-col items-center gap-3 py-2 animate-rise">
-      <p className="flex items-center gap-1.5 text-sm text-zinc-400">
+      {chadMode && (
+        <span className="animate-pulse rounded-full border border-amber-700/50 bg-amber-500/10 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
+          {t('loading.chadBadge')}
+        </span>
+      )}
+      <p className="flex items-center gap-1.5 text-sm text-muted">
         <span>{phase}</span>
         <span className="inline-flex items-center gap-0.5">
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 [animation-delay:150ms]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 [animation-delay:300ms]" />
+          <span className={`h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r ${dotGradient}`} />
+          <span className={`h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r ${dotGradient} [animation-delay:150ms]`} />
+          <span className={`h-1.5 w-1.5 animate-bounce rounded-full bg-gradient-to-r ${dotGradient} [animation-delay:300ms]`} />
         </span>
       </p>
       {(pending.length > 0 || (current?.responses.length ?? 0) > 0) && !moderatorInvoked && (
@@ -50,10 +61,10 @@ export default function LoadingState() {
             return (
               <span
                 key={pid}
-                className="flex items-center gap-1.5 rounded-full border border-neutral-800 px-2.5 py-1 text-xs text-neutral-500"
+                className="flex items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs text-muted"
               >
                 <span
-                  className="h-2.5 w-2.5 animate-spin rounded-full border border-neutral-600"
+                  className="h-2.5 w-2.5 animate-spin rounded-full border border-faint"
                   style={{ borderTopColor: providerColor(provider) }}
                 />
                 {participantLabel(pid)}
@@ -63,7 +74,7 @@ export default function LoadingState() {
           {current?.responses.map((r) => (
             <span
               key={r.model}
-              className="flex items-center gap-1.5 rounded-full border border-neutral-800 px-2.5 py-1 text-xs text-neutral-400"
+              className="flex items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs text-muted"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6 9 17l-5-5" />
@@ -75,9 +86,9 @@ export default function LoadingState() {
       )}
       <button
         onClick={stopDebate}
-        className="rounded-full border border-neutral-800 px-3 py-1 text-xs text-zinc-500 transition hover:border-red-900/70 hover:text-red-300 active:scale-95"
+        className="rounded-full border border-edge px-3 py-1 text-xs text-muted transition hover:border-red-900/70 hover:text-red-300 active:scale-95"
       >
-        ■ Stop
+        {t('loading.stop')}
       </button>
     </div>
   );

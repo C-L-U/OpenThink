@@ -18,7 +18,8 @@ Consensus strategy per round (cheapest check first):
 
 Stall detection: if no participant changed its FINAL POSITION during a debate
 round, further rounds would burn tokens without progress — the stream jumps
-straight to the moderator compromise.
+straight to the moderator compromise. The same shortcut applies when all but
+one participant agree and the lone holdout did not move since last round.
 """
 
 import asyncio
@@ -86,6 +87,31 @@ def _positions_similar(positions: list[str]) -> bool:
     norms = {_normalize_position(p) for p in positions}
     norms.discard("")
     return len(norms) == 1
+
+
+def _cluster_positions(responses: dict[str, str]) -> dict[str, list[str]]:
+    """Group participant ids by normalized position (empty positions ignored)."""
+    clusters: dict[str, list[str]] = {}
+    for pid, text in responses.items():
+        pos = _normalize_position(_extract_position(text))
+        if pos:
+            clusters.setdefault(pos, []).append(pid)
+    return clusters
+
+
+def _position_stability(history: dict[str, list[str]]) -> dict[str, int]:
+    """Consecutive rounds (counting back from the latest) each participant has held
+    its current normalized position."""
+    stability: dict[str, int] = {}
+    for pid, answers in history.items():
+        current = _normalize_position(_extract_position(answers[-1]))
+        count = 0
+        for past in reversed(answers):
+            if _normalize_position(_extract_position(past)) != current:
+                break
+            count += 1
+        stability[pid] = count
+    return stability
 
 
 def _public_error(detail: str) -> str:
@@ -242,15 +268,17 @@ async def _synthesize(
     keys: dict[str, str],
     labels: dict[str, str],
     responses: dict[str, str],
+    chad: bool,
 ) -> str:
     """One extra call to write the unified answer after convergence."""
     labeled = "\n\n".join(
         f"--- {labels[pid]} ---\n{text}" for pid, text in responses.items()
     )
     user = f"Question: {query}\n\nAgreed answers:\n{labeled}\n\nWrite the final unified answer in clean markdown."
+    system = prompts.CHAD_SYNTHESIS_SYSTEM if chad else prompts.SYNTHESIS_SYSTEM
     provider, model = spec[writer_pid]
     try:
-        return await call_model(provider, keys[provider], prompts.SYNTHESIS_SYSTEM, user, model=model, client=client)
+        return await call_model(provider, keys[provider], system, user, model=model, client=client)
     except Exception:
         # Degrade gracefully: fall back to the writer's own final answer.
         return responses.get(writer_pid) or next(iter(responses.values()))
@@ -266,6 +294,7 @@ async def _moderate(
     responses: dict[str, str],
     history: dict[str, list[str]],
     stalled: bool,
+    chad: bool,
 ) -> str:
     """Moderator compromise after the round cap (or a stalled debate).
 
@@ -277,6 +306,17 @@ async def _moderate(
     for pid, answers in history.items():
         steps = " → ".join(f'R{i + 1}: "{_extract_position(a)}"' for i, a in enumerate(answers))
         trajectory.append(f"- {labels[pid]}: {steps}")
+    # Voting landscape: per-position support and stability, so the moderator can
+    # weigh consensus signals structurally instead of re-deriving them.
+    clusters = _cluster_positions(responses)
+    stability = _position_stability(history)
+    landscape = []
+    for _pos, pids in sorted(clusters.items(), key=lambda kv: -len(kv[1])):
+        names = ", ".join(labels[pid] for pid in pids)
+        held = f"held by {len(pids)} model" + ("s" if len(pids) != 1 else "")
+        rounds = max(stability.get(pid, 1) for pid in pids)
+        shown = _extract_position(responses[pids[0]])
+        landscape.append(f'- "{shown}" — {held} ({names}); stable for {rounds} round{"s" if rounds != 1 else ""}')
     note = (
         "Note: the participants' positions stopped changing between rounds — the debate stalled."
         if stalled
@@ -287,11 +327,13 @@ async def _moderate(
     )
     user = (
         f"Question: {query}\n\nPosition trajectory:\n" + "\n".join(trajectory)
+        + "\n\nPosition support (final round):\n" + "\n".join(landscape)
         + f"\n\n{note}\n\nFinal-round arguments:\n{labeled}"
     )
     provider, model = spec[judge_pid]
+    system = prompts.CHAD_MODERATOR_SYSTEM if chad else prompts.MODERATOR_SYSTEM
     try:
-        return await call_model(provider, keys[provider], prompts.MODERATOR_SYSTEM, user, model=model, client=client)
+        return await call_model(provider, keys[provider], system, user, model=model, client=client)
     except Exception:
         parts = [
             "*Note: the moderator was unavailable, so the final positions "
@@ -323,12 +365,14 @@ async def run_debate(
     query: str,
     participants: list[tuple[str, str]],
     keys: dict[str, str],
+    chad: bool = False,
 ) -> AsyncGenerator[str, None]:
     """Drive the consensus flow, yielding SSE frames as plain strings.
 
     ``participants`` is a list of (provider, model) pairs — already resolved
     and deduplicated by the caller. Several may share the same provider with
-    different models; they share that provider's API key.
+    different models; they share that provider's API key. ``chad`` switches the
+    final synthesis/moderation to blunt, definitive verdicts.
     """
     # Participant identity: "provider:model" (model ids never contain ':').
     spec: dict[str, tuple[str, str]] = {}
@@ -407,7 +451,6 @@ async def run_debate(
                     and bool(prev_positions)
                     and all(prev_positions.get(pid) == pos for pid, pos in curr_positions.items())
                 )
-                prev_positions = curr_positions
 
                 if stalled and not _positions_similar(list(curr_positions.values())):
                     # Frozen disagreement: more rounds would only repeat arguments.
@@ -416,6 +459,23 @@ async def run_debate(
                         "reason": "Positions stopped changing — moving to the moderator.",
                     })
                     break
+
+                # Entrenched holdout: everyone agrees except one dissenter whose
+                # position did not move since last round — another round would only
+                # repeat the same majority pressure, so skip to the moderator.
+                if round_no > 1 and prev_positions:
+                    clusters = _cluster_positions(last_responses)
+                    holdouts = [pids for pids in clusters.values() if len(pids) == 1]
+                    if len(clusters) == 2 and len(holdouts) == 1:
+                        holdout = holdouts[0][0]
+                        if prev_positions.get(holdout) == curr_positions[holdout]:
+                            yield _frame({
+                                "type": "evaluation", "round": round_no, "consensus": False,
+                                "reason": "All but one participant agree and the holdout did not move — moving to the moderator.",
+                            })
+                            break
+
+                prev_positions = curr_positions
 
                 agreed, reason, judge_pid = await _check_consensus(
                     client, query, round_no, active, spec, keys, labels, last_responses
@@ -427,7 +487,7 @@ async def run_debate(
 
                 if agreed:
                     writer = judge_pid or active[0]
-                    content = await _synthesize(client, query, writer, spec, keys, labels, last_responses)
+                    content = await _synthesize(client, query, writer, spec, keys, labels, last_responses, chad)
                     yield _frame({"type": "consensus", "content": content, "converged": True, "rounds_used": rounds_used})
                     yield _frame({"type": "done"})
                     return
@@ -435,7 +495,7 @@ async def run_debate(
             # Round cap reached (or debate stalled) without consensus -> moderator.
             yield _frame({"type": "moderator_start"})
             judge_pid = active[0] if active else next(iter(last_responses))
-            content = await _moderate(client, query, judge_pid, spec, keys, labels, last_responses, history, stalled)
+            content = await _moderate(client, query, judge_pid, spec, keys, labels, last_responses, history, stalled, chad)
             yield _frame({"type": "consensus", "content": content, "converged": False, "rounds_used": rounds_used})
             yield _frame({"type": "done"})
         except Exception:  # last-resort guard: the stream must always terminate cleanly

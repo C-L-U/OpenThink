@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { useStore } from '../store';
+import { useT } from '../i18n';
 import type { DebateRound, ModelResponse } from '../types';
 import { lookupProvider, parseParticipant } from '../types';
 import ProviderLogo from './ProviderLogo';
@@ -8,6 +9,7 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
   const [expanded, setExpanded] = useState(false);
   const providers = useStore((s) => s.providers);
   const isError = Boolean(response.error);
+  const t = useT();
 
   const { provider, model } = parseParticipant(response.model);
   const name = lookupProvider(providers, provider).name;
@@ -16,21 +18,21 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
     ? 'border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
     : stance?.includes('revis')
       ? 'border-amber-800/60 bg-amber-950/40 text-amber-300'
-      : 'border-neutral-700 bg-[#161616] text-zinc-400';
+      : 'border-edge bg-inset text-muted';
 
   return (
     <div
       className={`rounded-xl border p-4 ${
-        isError ? 'border-red-900/60 bg-red-950/20' : 'border-neutral-800 bg-[#1e1e1e]'
+        isError ? 'border-red-900/60 bg-red-950/20' : 'border-edge bg-panel'
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-neutral-200">
+        <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-strong">
           <ProviderLogo id={provider} name={name} size={26} />
           <span className="truncate">{name}</span>
           {model && (
             <span
-              className="hidden shrink-0 rounded-md border border-neutral-800 bg-[#161616] px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 sm:inline"
+              className="hidden shrink-0 rounded-md border border-edge bg-inset px-1.5 py-0.5 font-mono text-[10px] text-muted sm:inline"
               title={model}
             >
               {model}
@@ -46,7 +48,7 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
           )}
         </span>
         {response.durationMs !== undefined && (
-          <span className="shrink-0 rounded-full border border-neutral-800 bg-[#161616] px-2 py-0.5 text-[10px] text-zinc-500">
+          <span className="shrink-0 rounded-full border border-edge bg-inset px-2 py-0.5 text-[10px] text-muted">
             {(response.durationMs / 1000).toFixed(1)}s
           </span>
         )}
@@ -57,7 +59,7 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
         <>
           {/* Plain-text rendering: React escapes all content (XSS-safe). */}
           <div
-            className={`overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-neutral-400 ${
+            className={`overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-muted ${
               expanded ? 'max-h-72' : 'max-h-[9rem]'
             }`}
           >
@@ -66,9 +68,9 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
           {response.content.split('\n').length > 6 || response.content.length > 400 ? (
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1.5 text-xs text-neutral-500 transition hover:text-neutral-300"
+              className="mt-1.5 text-xs text-muted transition hover:text-strong"
             >
-              {expanded ? 'Show less' : 'Show more'}
+              {t(expanded ? 'timeline.showLess' : 'timeline.showMore')}
             </button>
           ) : null}
         </>
@@ -80,6 +82,7 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
 /** Verdict block: who judged, what they ruled, and why. */
 function JudgeVerdict({ evaluation }: { evaluation: NonNullable<DebateRound['evaluation']> }) {
   const providers = useStore((s) => s.providers);
+  const t = useT();
   const judge = evaluation.judge ? parseParticipant(evaluation.judge) : null;
   const judgeName = judge ? lookupProvider(providers, judge.provider).name : null;
   return (
@@ -109,21 +112,21 @@ function JudgeVerdict({ evaluation }: { evaluation: NonNullable<DebateRound['eva
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className={`font-semibold ${evaluation.consensus ? 'text-emerald-300' : 'text-amber-300'}`}>
-            {evaluation.consensus ? 'Consensus reached' : 'No consensus'}
+            {t(evaluation.consensus ? 'timeline.consensusReached' : 'timeline.noConsensus')}
           </span>
           {judge && (
-            <span className="flex items-center gap-1 text-zinc-500">
-              · judged by
+            <span className="flex items-center gap-1 text-muted">
+              {t('timeline.judgedBy')}
               <ProviderLogo id={judge.provider} name={judgeName ?? ''} size={14} />
-              <span className="text-zinc-400">
+              <span className="text-muted">
                 {judgeName}
                 {judge.model ? ` (${judge.model})` : ''}
               </span>
             </span>
           )}
-          {!judge && <span className="text-zinc-500">· decided by position match</span>}
+          {!judge && <span className="text-muted">{t('timeline.positionMatch')}</span>}
         </p>
-        <p className="mt-1 text-xs italic leading-5 text-zinc-500">“{evaluation.reason}”</p>
+        <p className="mt-1 text-xs italic leading-5 text-muted">“{evaluation.reason}”</p>
       </div>
     </div>
   );
@@ -139,11 +142,12 @@ const RoundSection = memo(function RoundSection({
   isLast: boolean;
 }) {
   const [override, setOverride] = useState<boolean | null>(null);
+  const t = useT();
   const open = override ?? defaultOpen;
   const title =
     round.kind === 'initial'
-      ? `Round ${round.round} — Independent Answers`
-      : `Round ${round.round} — Debate`;
+      ? t('timeline.roundInitial', { n: round.round })
+      : t('timeline.roundDebate', { n: round.round });
 
   return (
     <div className="flex gap-3">
@@ -152,20 +156,20 @@ const RoundSection = memo(function RoundSection({
         <span
           className={`z-10 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold ${
             round.kind === 'initial'
-              ? 'border-neutral-700 bg-[#212121] text-zinc-400'
+              ? 'border-edge bg-panel text-muted'
               : 'border-emerald-900/60 bg-emerald-950/40 text-emerald-300'
           }`}
         >
           {round.round}
         </span>
-        {!isLast && <span className="w-px flex-1 bg-neutral-800" />}
+        {!isLast && <span className="w-px flex-1 bg-edge" />}
       </div>
 
       {/* Round card */}
-      <div className="min-w-0 flex-1 rounded-xl border border-neutral-800/70 animate-rise">
+      <div className="min-w-0 flex-1 rounded-xl border border-edge/70 animate-rise">
         <button
           onClick={() => setOverride(!open)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-neutral-300 transition hover:text-neutral-100"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-muted transition hover:text-strong"
         >
           <span>{title}</span>
           <svg
@@ -193,7 +197,7 @@ const RoundSection = memo(function RoundSection({
                 <ModelCard key={r.model} response={r} />
               ))}
               {round.responses.length === 0 && (
-                <p className="text-xs text-neutral-600">Waiting for model responses…</p>
+                <p className="text-xs text-faint">{t('timeline.waiting')}</p>
               )}
             </div>
           </div>
@@ -207,14 +211,15 @@ const RoundSection = memo(function RoundSection({
 export default function DebateTimeline() {
   const rounds = useStore((s) => s.rounds);
   const moderatorInvoked = useStore((s) => s.moderatorInvoked);
+  const t = useT();
   const latest = rounds.length > 0 ? rounds[rounds.length - 1].round : 0;
 
   if (rounds.length === 0) return null;
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-600">
-        Debate history
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-faint">
+        {t('timeline.history')}
       </h3>
       <div className="space-y-3">
         {rounds.map((r, i) => (
@@ -235,7 +240,7 @@ export default function DebateTimeline() {
               </span>
             </div>
             <div className="min-w-0 flex-1 rounded-xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-sm text-amber-400/90 animate-rise">
-              Moderator invoked — round limit reached
+              {t('timeline.moderatorInvoked')}
             </div>
           </div>
         )}
