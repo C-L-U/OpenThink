@@ -43,8 +43,10 @@ function SegmentedControl<T extends string>({
           key={opt.value}
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
-          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition active:scale-95 ${
-            value === opt.value ? 'bg-raised text-strong' : 'text-muted hover:text-strong'
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition duration-200 active:scale-95 ${
+            value === opt.value
+              ? 'bg-raised text-strong'
+              : 'text-muted hover:bg-raised/50 hover:text-strong'
           }`}
         >
           {opt.label}
@@ -228,7 +230,7 @@ function ProviderCard({ id }: { id: ProviderId }) {
 
   return (
     <div
-      className={`rounded-xl border border-edge bg-panel p-4 transition-opacity duration-200 ${
+      className={`rounded-xl border border-edge bg-panel p-4 transition-[opacity,border-color] duration-200 hover:border-faint/50 ${
         enabled ? '' : 'opacity-50'
       }`}
     >
@@ -285,7 +287,7 @@ function ProviderCard({ id }: { id: ProviderId }) {
                 onClick={() => toggleParticipant(id, m)}
                 aria-pressed={active}
                 title={`${m}${isDefault ? ` ${t('settings.defaultModel')}` : ''} — ${t(active ? 'settings.pillRemove' : 'settings.pillAdd')}`}
-                className={`flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[11px] transition active:scale-95 ${
+                className={`flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[11px] transition duration-200 active:scale-95 ${
                   active
                     ? 'border-faint bg-raised/60 text-strong'
                     : 'border-edge bg-inset text-muted hover:border-faint hover:text-strong'

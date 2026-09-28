@@ -16,7 +16,7 @@ export default function ChadToggle() {
       onClick={() => setChadMode(!chadMode)}
       aria-pressed={chadMode}
       title={t('chad.toggleTitle')}
-      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition active:scale-95 ${
+      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition duration-200 active:scale-95 ${
         chadMode
           ? 'border-amber-700/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
           : 'border-edge bg-panel text-faint hover:border-faint hover:text-muted'

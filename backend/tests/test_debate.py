@@ -14,6 +14,7 @@ from unittest import mock
 
 from app import debate, prompts
 from app.providers import PROVIDERS
+from app.schemas import RoundSnapshot, SnapshotResponse
 
 
 def pid_of(provider: str, model: str | None = None) -> str:
@@ -50,10 +51,10 @@ def make_fake(answers, judge_reply="VERDICT: NO\nREASON: They recommend differen
     return fake_call_model, calls
 
 
-async def collect(query, participants, keys, chad=False):
+async def collect(query, participants, keys, chad=False, resume_from=None):
     """Run a debate to completion and return the parsed event dicts."""
     events = []
-    async for frame in debate.run_debate(query, participants, keys, chad=chad):
+    async for frame in debate.run_debate(query, participants, keys, chad=chad, resume_from=resume_from):
         events.append(json.loads(frame.removeprefix("data:")))
     return events
 
@@ -70,6 +71,15 @@ def answer(position, body="Some reasoning.", stance=None):
 
 def default_participants(*providers: str) -> list[tuple[str, str]]:
     return [(p, PROVIDERS[p].default_model) for p in providers]
+
+
+def snapshot(round_no: int, kind: str, contents: dict[str, str]) -> RoundSnapshot:
+    """Build a RoundSnapshot from a {participant_id: answer} mapping."""
+    return RoundSnapshot(
+        round=round_no,
+        kind=kind,
+        responses=[SnapshotResponse(model=pid, content=c) for pid, c in contents.items()],
+    )
 
 
 class DebateEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -260,6 +270,158 @@ class DebateEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(events[2]["error"], "invalid API key")  # sanitized, not the raw body
         self.assertTrue(events[3]["converged"])
         self.assertIn("The only answer.", events[3]["content"])
+
+    async def test_resume_continues_and_converges(self):
+        """resume_from with completed round 1: the debate re-runs round 2 and
+        converges there — INITIAL_SYSTEM is never used."""
+        answers = {
+            pid_of("openai"): [answer("Monitor X is the best choice.", stance="MAINTAINED")],
+            pid_of("anthropic"): [answer("Monitor X is the best choice.", stance="CONCEDED to ChatGPT")],
+        }
+        fake, calls = make_fake(answers)
+        resume_from = [snapshot(1, "initial", {
+            pid_of("openai"): answer("Monitor X is the best choice."),
+            pid_of("anthropic"): answer("Monitor Y is the best choice."),
+        })]
+        with mock.patch.object(debate, "call_model", new=fake):
+            events = await collect(
+                "Best monitor?", default_participants("openai", "anthropic"),
+                {"openai": "k", "anthropic": "k"}, resume_from=resume_from,
+            )
+
+        self.assertEqual(
+            self.types(events),
+            ["round_start", "model_response", "model_response", "evaluation", "consensus", "done"],
+        )
+        self.assertEqual(events[0]["round"], 2)
+        self.assertEqual(events[0]["kind"], "debate")
+        self.assertNotIn(prompts.INITIAL_SYSTEM, [s for _, _, s, _u in calls])
+        self.assertNotIn(prompts.JUDGE_SYSTEM, [s for _, _, s, _u in calls])  # fast path
+        consensus = events[-2]
+        self.assertTrue(consensus["converged"])
+        self.assertEqual(consensus["rounds_used"], 2)
+
+    async def test_resume_exhausts_rounds_and_moderates(self):
+        """Seed rounds 1-2 with shifting positions; round 3 still disagrees, so
+        the round cap sends the debate to the moderator with the full trajectory."""
+        answers = {
+            pid_of("openai"): [answer("Option A3 is best.", stance="MAINTAINED")],
+            pid_of("anthropic"): [answer("Option B3 is best.", stance="MAINTAINED")],
+        }
+        fake, calls = make_fake(answers)
+        resume_from = [
+            snapshot(1, "initial", {
+                pid_of("openai"): answer("Option A1 is best."),
+                pid_of("anthropic"): answer("Option B1 is best."),
+            }),
+            snapshot(2, "debate", {
+                pid_of("openai"): answer("Option A2 is best.", stance="REVISED"),
+                pid_of("anthropic"): answer("Option B2 is best.", stance="REVISED"),
+            }),
+        ]
+        with mock.patch.object(debate, "call_model", new=fake):
+            events = await collect(
+                "A or B?", default_participants("openai", "anthropic"),
+                {"openai": "k", "anthropic": "k"}, resume_from=resume_from,
+            )
+
+        self.assertEqual(
+            self.types(events),
+            [
+                "round_start", "model_response", "model_response", "evaluation",
+                "moderator_start", "consensus", "done",
+            ],
+        )
+        self.assertEqual(events[0]["round"], 3)
+        self.assertEqual(events[0]["kind"], "debate")
+        self.assertNotIn(prompts.INITIAL_SYSTEM, [s for _, _, s, _u in calls])
+        consensus = events[-2]
+        self.assertFalse(consensus["converged"])
+        self.assertEqual(consensus["rounds_used"], 3)
+        self.assertEqual(consensus["content"], "MODERATED COMPROMISE")
+        # The moderator saw the seeded trajectory, not just round 3.
+        mod_prompt = [u for _p, _m, s, u in calls if s == prompts.MODERATOR_SYSTEM][0]
+        self.assertIn('R1: "Option A1 is best."', mod_prompt)
+        self.assertIn('R2: "Option B2 is best."', mod_prompt)
+
+    async def test_resume_ignores_unknown_participants(self):
+        """A seeded response from a pid outside the roster is dropped; the debate
+        still resumes cleanly from round 2."""
+        answers = {
+            pid_of("openai"): [answer("Monitor X is the best choice.", stance="MAINTAINED")],
+            pid_of("anthropic"): [answer("Monitor X is the best choice.", stance="CONCEDED to ChatGPT")],
+        }
+        fake, calls = make_fake(answers)
+        resume_from = [snapshot(1, "initial", {
+            pid_of("openai"): answer("Monitor X is the best choice."),
+            pid_of("anthropic"): answer("Monitor Y is the best choice."),
+            "unknown:ghost-1": answer("I was never in this debate."),
+        })]
+        with mock.patch.object(debate, "call_model", new=fake):
+            events = await collect(
+                "Best monitor?", default_participants("openai", "anthropic"),
+                {"openai": "k", "anthropic": "k"}, resume_from=resume_from,
+            )
+
+        self.assertEqual(events[0]["type"], "round_start")
+        self.assertEqual(events[0]["round"], 2)
+        self.assertTrue(events[-2]["converged"])
+        self.assertEqual(events[-2]["rounds_used"], 2)
+        # The ghost participant never leaked into any prompt.
+        self.assertFalse(any("ghost-1" in u for *_s, u in calls))
+
+    async def test_resume_without_round_1_starts_fresh(self):
+        """A snapshot that lacks round 1 is not a valid seed: the engine ignores
+        it entirely and runs a normal debate from round 1."""
+        same = answer("The Dell U3425WE is the best 34-inch curved monitor.")
+        fake, calls = make_fake({pid_of("openai"): [same], pid_of("anthropic"): [same]})
+        resume_from = [snapshot(2, "debate", {
+            pid_of("openai"): answer("Option A2 is best."),
+            pid_of("anthropic"): answer("Option B2 is best."),
+        })]
+        with mock.patch.object(debate, "call_model", new=fake):
+            events = await collect(
+                "Best monitor?", default_participants("openai", "anthropic"),
+                {"openai": "k", "anthropic": "k"}, resume_from=resume_from,
+            )
+
+        self.assertEqual(events[0]["round"], 1)
+        self.assertEqual(events[0]["kind"], "initial")
+        self.assertIn(prompts.INITIAL_SYSTEM, [s for _, _, s, _u in calls])
+        self.assertEqual(events[-2]["rounds_used"], 1)
+
+    async def test_resume_seed_beyond_round_cap_goes_straight_to_moderator(self):
+        """A full 3-round seed leaves no rounds to run: the moderator decides
+        directly from the seeded trajectory."""
+        calls = []
+
+        async def fake(provider_id, api_key, system_prompt, user_prompt, model=None, client=None):
+            calls.append((provider_id, model, system_prompt, user_prompt))
+            if system_prompt == prompts.MODERATOR_SYSTEM:
+                return "MODERATED COMPROMISE"
+            raise AssertionError(f"unexpected system prompt: {system_prompt!r}")
+
+        seeds = [
+            (1, "initial", "Option A1 is best.", "Option B1 is best."),
+            (2, "debate", "Option A2 is best.", "Option B2 is best."),
+            (3, "debate", "Option A3 is best.", "Option B3 is best."),
+        ]
+        resume_from = [
+            snapshot(r, kind, {pid_of("openai"): answer(a), pid_of("anthropic"): answer(b)})
+            for r, kind, a, b in seeds
+        ]
+        with mock.patch.object(debate, "call_model", new=fake):
+            events = await collect(
+                "A or B?", default_participants("openai", "anthropic"),
+                {"openai": "k", "anthropic": "k"}, resume_from=resume_from,
+            )
+
+        self.assertEqual(self.types(events), ["moderator_start", "consensus", "done"])
+        consensus = events[-2]
+        self.assertFalse(consensus["converged"])
+        self.assertEqual(consensus["rounds_used"], 3)
+        mod_prompt = calls[0][3]
+        self.assertIn('R3: "Option A3 is best."', mod_prompt)
 
     def test_debate_prompt_has_anti_conformity_guardrail(self):
         """DEBATE_SYSTEM must counter majority-pressure conformity (cf. MAD literature)."""

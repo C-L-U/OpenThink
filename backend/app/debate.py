@@ -366,6 +366,7 @@ async def run_debate(
     participants: list[tuple[str, str]],
     keys: dict[str, str],
     chad: bool = False,
+    resume_from: list | None = None,
 ) -> AsyncGenerator[str, None]:
     """Drive the consensus flow, yielding SSE frames as plain strings.
 
@@ -373,6 +374,11 @@ async def run_debate(
     and deduplicated by the caller. Several may share the same provider with
     different models; they share that provider's API key. ``chad`` switches the
     final synthesis/moderation to blunt, definitive verdicts.
+
+    ``resume_from`` carries the completed rounds of a paused debate (a round is
+    complete once its evaluation was received). When it contains round 1, the
+    engine seeds its history with those answers and continues at the round
+    after the last seeded one — the interrupted round simply re-runs.
     """
     # Participant identity: "provider:model" (model ids never contain ':').
     spec: dict[str, tuple[str, str]] = {}
@@ -383,6 +389,23 @@ async def run_debate(
             continue
         spec[pid] = (provider, model)
         labels[pid] = f"{DISPLAY_NAMES[provider]} ({model})"
+
+    # Sanitize the resume snapshot: drop unknown participants and rounds left
+    # empty by that filtering, sort by round, and let the first occurrence win
+    # on duplicate round numbers.
+    seed: list[tuple[int, dict[str, str]]] = []
+    if resume_from:
+        seen_rounds: set[int] = set()
+        for snap in sorted(resume_from, key=lambda s: s.round):
+            if snap.round in seen_rounds:
+                continue
+            seen_rounds.add(snap.round)
+            responses = {r.model: r.content for r in snap.responses if r.model in spec}
+            if responses:
+                seed.append((snap.round, responses))
+        # A resume needs at least round 1 complete; without it, start fresh.
+        if seed and all(round_no != 1 for round_no, _ in seed):
+            seed = []
 
     # One shared HTTP client for every provider call in this debate request.
     async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
@@ -402,8 +425,23 @@ async def run_debate(
             prev_positions: dict[str, str] = {}
             rounds_used = 0
             stalled = False
+            start_round = 1
 
-            for round_no in range(1, MAX_ROUNDS + 1):
+            if seed:
+                # Replant the completed rounds: history, last-round responses,
+                # and the position baseline the stall/holdout checks compare
+                # against. The loop then continues right after the last seed.
+                for _round_no, responses in seed:
+                    for pid, text in responses.items():
+                        history.setdefault(pid, []).append(text)
+                last_responses = dict(seed[-1][1])
+                prev_positions = {
+                    pid: _normalize_position(_extract_position(t)) for pid, t in last_responses.items()
+                }
+                start_round = seed[-1][0] + 1
+                rounds_used = start_round - 1
+
+            for round_no in range(start_round, MAX_ROUNDS + 1):
                 kind = "initial" if round_no == 1 else "debate"
                 yield _frame({"type": "round_start", "round": round_no, "kind": kind, "max_rounds": MAX_ROUNDS})
 

@@ -53,6 +53,7 @@ You: "Is Dune a good book for someone who liked Foundation?"
 | 🎯 **Holdout early-exit** | If everyone agrees except one dissenter who didn't budge, the debate skips the remaining rounds and goes straight to the Moderator |
 | 🗳️ **Voting landscape** | The Moderator receives a structured per-position breakdown — support count and stability in rounds (CONSENSAGENT-inspired) — as context, never as a binding vote |
 | 🧑‍⚖️ **Moderator failsafe** | Hard 3-round cap; the Moderator weighs the full position trajectory and decides |
+| ⏸ **Pause & resume** | Pause mid-debate without losing progress — resuming continues exactly where it stopped, re-running only the interrupted round |
 | 💪 **Chad Mode** | Optional switch: the final answer is distilled to a blunt, definitive verdict — no nuance, no "it depends". Visible toggle right in the chat |
 | 🌐 **Bilingual UI** | Full Spanish/English interface, auto-detected from the browser |
 | 🌙 **Light & dark themes** | CSS-variable theming, persisted, no reload flash |
@@ -176,7 +177,9 @@ openthink/
 | `/api/health` | GET | `{"status": "ok"}` |
 | `/api/providers` | GET | Dynamic provider registry: `{"providers": [{"id", "name", "default_model", "models"}]}` |
 | `/api/validate` | POST | Tests one key. Body `{"provider": "<id>", "model"?}`, key in `x-api-key-<id>` header. Always 200 with `{"ok", "latency_ms"/"error"}` |
-| `/api/debate` | POST | `text/event-stream`. Body `{"query", "participants": [{"provider": "xai", "model": "grok-4.6"}, …], "chad"?}`; keys via `x-api-key-<provider>` headers |
+| `/api/debate` | POST | `text/event-stream`. Body `{"query", "participants": [{"provider": "xai", "model": "grok-4.6"}, …], "chad"?, "resume_from"?}`; keys via `x-api-key-<provider>` headers |
+
+> ⏸ **`resume_from`** (optional): the completed rounds of a paused debate — `[{"round": 1, "kind": "initial", "responses": [{"model": "xai:grok-4.6", "content": "…"}, …]}, …]`. When it contains round 1, the engine continues at the round after the last seeded one (re-running only the interrupted round); without round 1 it is ignored and the debate starts fresh.
 
 > 🧩 **Participants, not providers**: each participant is a `(provider, model)` pair, so a debate can pit **several models of the same company** against each other (e.g. `grok-4.5` vs `grok-4.6`). Identical pairs are deduplicated; participants sharing a provider share its API key.
 

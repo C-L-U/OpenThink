@@ -34,7 +34,14 @@ export interface DebateRound {
   evaluation?: { consensus: boolean; reason: string; judge?: ParticipantId };
 }
 
-export type DebateStatus = 'idle' | 'running' | 'done' | 'error';
+export type DebateStatus = 'idle' | 'running' | 'paused' | 'done' | 'error';
+
+/** A completed round of a paused debate, sent back as `resume_from` on resume. */
+export interface RoundSnapshot {
+  round: number;
+  kind: 'initial' | 'debate';
+  responses: { model: ParticipantId; content: string }[];
+}
 
 /** Shape returned by GET /api/providers. */
 export interface ProviderInfo {

@@ -12,9 +12,43 @@ export default function LoadingState() {
   const moderatorInvoked = useStore((s) => s.moderatorInvoked);
   const chadMode = useStore((s) => s.chadMode);
   const stopDebate = useStore((s) => s.stopDebate);
+  const pauseDebate = useStore((s) => s.pauseDebate);
+  const resumeDebate = useStore((s) => s.resumeDebate);
+  const reset = useStore((s) => s.reset);
   const t = useT();
 
-  if (status !== 'running') return null;
+  if (status !== 'running' && status !== 'paused') return null;
+
+  const chadBadge = chadMode && (
+    <span className="animate-pulse rounded-full border border-amber-700/50 bg-amber-500/10 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
+      {t('loading.chadBadge')}
+    </span>
+  );
+
+  // Paused: the completed rounds stay on screen; resume re-runs only the
+  // interrupted round, discard throws the whole debate away.
+  if (status === 'paused') {
+    return (
+      <div className="flex flex-col items-center gap-3 py-2 animate-rise">
+        {chadBadge}
+        <p className="text-sm text-muted">{t('loading.paused')}</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void resumeDebate()}
+            className="rounded-full bg-strong px-3.5 py-1 text-xs font-medium text-[rgb(var(--c-bg))] shadow-sm transition hover:opacity-90 active:scale-95"
+          >
+            {t('loading.resume')}
+          </button>
+          <button
+            onClick={reset}
+            className="rounded-full border border-edge px-3 py-1 text-xs text-muted transition hover:border-red-900/70 hover:text-red-300 active:scale-95"
+          >
+            {t('loading.discard')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const current = rounds.find((r) => r.round === currentRound);
   const answered = new Set(current?.responses.map((r) => r.model) ?? []);
@@ -41,11 +75,7 @@ export default function LoadingState() {
 
   return (
     <div className="flex flex-col items-center gap-3 py-2 animate-rise">
-      {chadMode && (
-        <span className="animate-pulse rounded-full border border-amber-700/50 bg-amber-500/10 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
-          {t('loading.chadBadge')}
-        </span>
-      )}
+      {chadBadge}
       <p className="flex items-center gap-1.5 text-sm text-muted">
         <span>{phase}</span>
         <span className="inline-flex items-center gap-0.5">
@@ -84,12 +114,20 @@ export default function LoadingState() {
           ))}
         </div>
       )}
-      <button
-        onClick={stopDebate}
-        className="rounded-full border border-edge px-3 py-1 text-xs text-muted transition hover:border-red-900/70 hover:text-red-300 active:scale-95"
-      >
-        {t('loading.stop')}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={pauseDebate}
+          className="rounded-full border border-edge px-3 py-1 text-xs text-muted transition hover:border-faint hover:text-strong active:scale-95"
+        >
+          {t('loading.pause')}
+        </button>
+        <button
+          onClick={stopDebate}
+          className="rounded-full border border-edge px-3 py-1 text-xs text-muted transition hover:border-red-900/70 hover:text-red-300 active:scale-95"
+        >
+          {t('loading.stop')}
+        </button>
+      </div>
     </div>
   );
 }

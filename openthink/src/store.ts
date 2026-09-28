@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { fetchProviders, streamDebate, validateKey, type DebateEvent } from './api';
-import type { DebateRound, DebateStatus, ModelResponse, ParticipantId, ProviderId, ProviderInfo } from './types';
+import type { DebateRound, DebateStatus, ModelResponse, ParticipantId, ProviderId, ProviderInfo, RoundSnapshot } from './types';
 import { PROVIDERS, lookupProvider, makeParticipant, parseParticipant } from './types';
 
 const ALL_PROVIDERS: ProviderId[] = PROVIDERS.map((p) => p.id);
@@ -64,9 +64,18 @@ interface DebateState {
   error: string | null;
   /** In-flight stream abort handle (ephemeral, never persisted). */
   abortController: AbortController | null;
+  /** Set by pauseDebate() so the abort is settled as 'paused' instead of 'done'. */
+  pauseIntent: boolean;
   startDebate: (query: string) => Promise<void>;
   /** Aborts the in-flight debate stream; partial results stay on screen. */
   stopDebate: () => void;
+  /** Pauses the in-flight debate, keeping progress for a later resume. */
+  pauseDebate: () => void;
+  /** Continues a paused debate from its completed rounds (re-runs only the
+   *  interrupted one). */
+  resumeDebate: () => Promise<void>;
+  /** Internal shared stream driver used by startDebate/resumeDebate. */
+  _runStream: (query: string, controller: AbortController, resumeFrom?: RoundSnapshot[]) => Promise<void>;
   applyEvent: (event: DebateEvent) => void;
   reset: () => void;
   dismissError: () => void;
@@ -99,7 +108,23 @@ const initialDebateState = {
   moderatorInvoked: false,
   error: null as string | null,
   abortController: null as AbortController | null,
+  pauseIntent: false,
 };
+
+/** Merge an incoming response over an existing one (e.g. a re-run round after a
+ *  resume): a fresh success clears any previous error, and a fresh error drops
+ *  stale content/stance. */
+function mergeResponse(prev: ModelResponse, next: ModelResponse): ModelResponse {
+  const merged: ModelResponse = { ...prev, ...next };
+  if (next.error) {
+    merged.content = '';
+    delete merged.stance;
+  } else {
+    delete merged.error;
+    if (!next.stance) delete merged.stance;
+  }
+  return merged;
+}
 
 function upsertResponse(
   rounds: DebateRound[],
@@ -113,7 +138,7 @@ function upsertResponse(
   const responses =
     rIdx === -1
       ? [...round.responses, response]
-      : round.responses.map((r, i) => (i === rIdx ? { ...r, ...response } : r));
+      : round.responses.map((r, i) => (i === rIdx ? mergeResponse(r, response) : r));
   const next = rounds.slice();
   next[idx] = { ...round, responses };
   return next;
@@ -188,27 +213,70 @@ export const useStore = create<OpenThinkState>()(
       ...initialDebateState,
 
       startDebate: async (query) => {
-        const { participants, apiKeys, status, chadMode } = get();
+        const { participants, status } = get();
         const trimmed = query.trim();
         if (!trimmed || status === 'running' || participants.length === 0) return;
-        const payload = participants.map((pid) => parseParticipant(pid));
         const controller = new AbortController();
         set({ ...initialDebateState, status: 'running', query: trimmed, abortController: controller });
+        await get()._runStream(trimmed, controller);
+      },
+
+      stopDebate: () => {
+        get().abortController?.abort();
+      },
+
+      pauseDebate: () => {
+        if (get().status !== 'running') return;
+        set({ pauseIntent: true });
+        get().abortController?.abort();
+      },
+
+      resumeDebate: async () => {
+        const { status, query, participants, rounds } = get();
+        if (status !== 'paused' || !query || participants.length === 0) return;
+        // Only fully evaluated rounds are safe to seed; the interrupted round
+        // re-runs and its incoming events upsert over what's on screen.
+        const resumeFrom: RoundSnapshot[] = rounds
+          .filter((r) => r.evaluation)
+          .map((r) => ({
+            round: r.round,
+            kind: r.kind,
+            responses: r.responses
+              .filter((x) => !x.error)
+              .map((x) => ({ model: x.model, content: x.content })),
+          }));
+        const controller = new AbortController();
+        set({
+          status: 'running',
+          error: null,
+          pauseIntent: false,
+          moderatorInvoked: false,
+          abortController: controller,
+        });
+        await get()._runStream(query, controller, resumeFrom);
+      },
+
+      // Shared stream driver for startDebate/resumeDebate: consumes events into
+      // the store and settles the final status (paused/done/error).
+      _runStream: async (query, controller, resumeFrom) => {
+        const { participants, apiKeys, chadMode } = get();
+        const payload = participants.map((pid) => parseParticipant(pid));
         try {
           await streamDebate(
-            trimmed,
+            query,
             payload,
             apiKeys,
             (event) => get().applyEvent(event),
             controller.signal,
             chadMode,
+            resumeFrom,
           );
           // Stream ended; if we never saw done/consensus, close out gracefully.
-          set((s) => (s.status === 'running' ? { status: 'done' } : s));
+          set((s) => (s.status === 'running' ? { status: s.pauseIntent ? 'paused' : 'done' } : s));
         } catch (err) {
           if (err instanceof DOMException && err.name === 'AbortError') {
-            // User stopped the debate: keep whatever arrived on screen.
-            set((s) => (s.status === 'running' ? { status: 'done' } : s));
+            // User stopped or paused the debate: keep whatever arrived on screen.
+            set((s) => (s.status === 'running' ? { status: s.pauseIntent ? 'paused' : 'done' } : s));
           } else {
             set({
               status: 'error',
@@ -216,12 +284,8 @@ export const useStore = create<OpenThinkState>()(
             });
           }
         } finally {
-          set({ abortController: null });
+          set({ abortController: null, pauseIntent: false });
         }
-      },
-
-      stopDebate: () => {
-        get().abortController?.abort();
       },
 
       applyEvent: (event) =>

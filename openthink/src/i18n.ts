@@ -44,6 +44,10 @@ const en = {
   'loading.moderating': 'Moderator is synthesizing the best compromise',
   'loading.chadBadge': '⚡ CHAD MODE — blunt verdict incoming',
   'loading.stop': '■ Stop',
+  'loading.pause': '⏸ Pause',
+  'loading.paused': 'Debate paused — your progress is kept',
+  'loading.resume': '▶ Resume',
+  'loading.discard': 'Discard',
 
   'chad.label': 'Chad Mode',
   'chad.on': 'ON',
@@ -182,6 +186,10 @@ const es: typeof en = {
   'loading.moderating': 'El moderador está sintetizando el mejor compromiso',
   'loading.chadBadge': '⚡ MODO CHAD — veredicto tajante en camino',
   'loading.stop': '■ Detener',
+  'loading.pause': '⏸ Pausar',
+  'loading.paused': 'Debate en pausa — tu progreso se conserva',
+  'loading.resume': '▶ Reanudar',
+  'loading.discard': 'Descartar',
 
   'chad.label': 'Modo Chad',
   'chad.on': 'activado',

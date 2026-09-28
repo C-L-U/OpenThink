@@ -1,4 +1,4 @@
-import type { ProviderId, ProviderInfo } from './types';
+import type { ProviderId, ProviderInfo, RoundSnapshot } from './types';
 
 export type DebateEvent =
   | { type: 'round_start'; round: number; kind: 'initial' | 'debate'; max_rounds: number }
@@ -13,7 +13,6 @@ export type DebateEvent =
 // Relative base: the Vite dev proxy forwards /api → localhost:8000, and in
 // production FastAPI serves the built frontend same-origin.
 const API_BASE = '/api';
-
 /** Extracts a readable message from an error response (handles 429 + 422 detail). */
 async function errorMessage(response: Response): Promise<string> {
   try {
@@ -87,6 +86,8 @@ export async function validateKey(
  * Streams a debate via SSE-over-fetch (EventSource can't send custom headers).
  * Parses `data: <json>\n\n` frames incrementally and invokes onEvent per event.
  * Pass an AbortSignal to let the user stop the debate mid-stream.
+ * `resumeFrom` carries the completed rounds of a paused debate so the backend
+ * continues where it left off instead of starting over.
  */
 export async function streamDebate(
   query: string,
@@ -95,6 +96,7 @@ export async function streamDebate(
   onEvent: (event: DebateEvent) => void,
   signal?: AbortSignal,
   chad = false,
+  resumeFrom?: RoundSnapshot[],
 ): Promise<void> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   // One key per provider, shared by all of its participants.
@@ -110,7 +112,7 @@ export async function streamDebate(
     response = await fetch(`${API_BASE}/debate`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ query, participants, chad }),
+      body: JSON.stringify({ query, participants, chad, ...(resumeFrom?.length ? { resume_from: resumeFrom } : {}) }),
       signal: signal ?? null,
     });
   } catch (err) {
@@ -145,7 +147,7 @@ export async function streamDebate(
     }
   };
 
-  for (;;) {
+  for (; ;) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });

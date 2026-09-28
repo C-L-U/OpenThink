@@ -39,6 +39,21 @@ class Participant(BaseModel):
         return v
 
 
+class SnapshotResponse(BaseModel):
+    """One participant's answer inside a completed round of a paused debate."""
+
+    model: str = Field(min_length=1, max_length=220, description='Participant id: "provider:model".')
+    content: str = Field(max_length=32000)
+
+
+class RoundSnapshot(BaseModel):
+    """A completed round (its evaluation was already received) used to resume a debate."""
+
+    round: int = Field(ge=1, le=3)
+    kind: Literal["initial", "debate"]
+    responses: list[SnapshotResponse] = Field(max_length=16)
+
+
 class DebateRequest(BaseModel):
     """Body of POST /api/debate."""
 
@@ -51,6 +66,14 @@ class DebateRequest(BaseModel):
     chad: bool = Field(
         default=False,
         description="Chad mode: the final answer becomes a blunt, definitive verdict with zero hedging.",
+    )
+    resume_from: list[RoundSnapshot] | None = Field(
+        default=None,
+        max_length=3,
+        description=(
+            "Completed rounds of a paused debate. When round 1 is present the engine "
+            "continues after the last seeded round instead of starting over."
+        ),
     )
 
 

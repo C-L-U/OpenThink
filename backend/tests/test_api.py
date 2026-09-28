@@ -154,9 +154,9 @@ class ApiTests(unittest.TestCase):
         captured = {}
         original = main.run_debate
 
-        def spy(query, participants, keys, chad=False):
+        def spy(query, participants, keys, chad=False, resume_from=None):
             captured["chad"] = chad
-            return original(query, participants, keys, chad=chad)
+            return original(query, participants, keys, chad=chad, resume_from=resume_from)
 
         same = answer("Monitor X is the best.")
         fake = make_fake({
@@ -177,6 +177,56 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(captured["chad"])
         self.assertTrue(events[-2]["converged"])
         self.assertEqual(events[-2]["content"], "UNIFIED ANSWER")
+
+    def test_debate_resume_from_reaches_engine(self):
+        """A valid `resume_from` in the body is forwarded to run_debate."""
+        captured = {}
+        original = main.run_debate
+
+        def spy(query, participants, keys, chad=False, resume_from=None):
+            captured["resume_from"] = resume_from
+            return original(query, participants, keys, chad=chad, resume_from=resume_from)
+
+        answers = {
+            f"openai:{PROVIDERS['openai'].default_model}": [answer("Monitor X is the best.")],
+            f"anthropic:{PROVIDERS['anthropic'].default_model}": [answer("Monitor X is the best.")],
+        }
+        fake = make_fake(answers)
+        resume_from = [{
+            "round": 1,
+            "kind": "initial",
+            "responses": [
+                {"model": f"openai:{PROVIDERS['openai'].default_model}", "content": answer("Monitor X is the best.")},
+                {"model": f"anthropic:{PROVIDERS['anthropic'].default_model}", "content": answer("Monitor Y is the best.")},
+            ],
+        }]
+        with mock.patch.object(main, "run_debate", side_effect=spy), \
+             mock.patch("app.debate.call_model", new=fake):
+            events = stream_events(
+                self.client,
+                {
+                    "query": "Best monitor?",
+                    "participants": [{"provider": "openai"}, {"provider": "anthropic"}],
+                    "resume_from": resume_from,
+                },
+                {"x-api-key-openai": "k1", "x-api-key-anthropic": "k2"},
+            )
+        self.assertEqual([s.round for s in captured["resume_from"]], [1])
+        # The engine resumed at round 2 and converged there.
+        self.assertEqual(events[0]["round"], 2)
+        self.assertTrue(events[-2]["converged"])
+        self.assertEqual(events[-2]["rounds_used"], 2)
+
+    def test_debate_rejects_invalid_resume_round(self):
+        r = self.client.post(
+            "/api/debate",
+            json={
+                "query": "q",
+                "participants": [{"provider": "openai"}],
+                "resume_from": [{"round": 0, "kind": "initial", "responses": []}],
+            },
+        )
+        self.assertEqual(r.status_code, 422)
 
     def test_debate_rejects_dead_model(self):
         r = self.client.post(

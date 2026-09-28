@@ -50,7 +50,7 @@ export default function InputBar({ centered }: { centered?: boolean }) {
 
   return (
     <div className={centered ? 'w-full max-w-2xl' : 'w-full max-w-3xl mx-auto'}>
-      <div className="relative flex items-end rounded-2xl border border-edge bg-raised shadow-lg focus-within:border-faint transition-colors">
+      <div className="relative flex items-end rounded-2xl border border-edge bg-raised shadow-lg transition-[border-color,box-shadow] focus-within:border-emerald-600/40 focus-within:shadow-[0_0_28px_-8px_rgb(16_185_129/0.35)]">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -69,7 +69,7 @@ export default function InputBar({ centered }: { centered?: boolean }) {
           onClick={submit}
           disabled={running || !value.trim()}
           aria-label={t('input.send')}
-          className="absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-strong text-[rgb(var(--c-bg))] transition hover:opacity-90 active:scale-90 disabled:opacity-30 disabled:hover:opacity-30 disabled:active:scale-100"
+          className="absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-strong text-[rgb(var(--c-bg))] shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-90 disabled:opacity-30 disabled:hover:opacity-30 disabled:shadow-none disabled:hover:shadow-none disabled:active:scale-100"
         >
           {running ? (
             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-base/40 border-t-base" />

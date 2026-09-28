@@ -22,7 +22,7 @@ const ModelCard = memo(function ModelCard({ response }: { response: ModelRespons
 
   return (
     <div
-      className={`rounded-xl border p-4 ${
+      className={`rounded-xl border p-4 shadow-sm transition-colors ${
         isError ? 'border-red-900/60 bg-red-950/20' : 'border-edge bg-panel'
       }`}
     >
@@ -166,10 +166,12 @@ const RoundSection = memo(function RoundSection({
       </div>
 
       {/* Round card */}
-      <div className="min-w-0 flex-1 rounded-xl border border-edge/70 animate-rise">
+      <div className="min-w-0 flex-1 rounded-xl border border-edge/70 shadow-sm transition-colors animate-rise">
         <button
           onClick={() => setOverride(!open)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-muted transition hover:text-strong"
+          className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-muted transition-colors hover:bg-raised/40 hover:text-strong ${
+            open || round.evaluation ? 'rounded-t-xl' : 'rounded-xl'
+          }`}
         >
           <span>{title}</span>
           <svg

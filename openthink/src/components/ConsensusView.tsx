@@ -207,7 +207,7 @@ export default function ConsensusView() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted">
+              <p className="mt-0.5 text-xs text-muted">
                 {converged
                   ? t('consensus.unanimous', { n: consensus.roundsUsed, rounds: roundWord })
                   : t('consensus.moderated', { n: consensus.roundsUsed, rounds: roundWord })}
@@ -219,7 +219,7 @@ export default function ConsensusView() {
               onClick={share}
               aria-label={t('consensus.share')}
               title={t('consensus.share')}
-              className="rounded-lg p-2 text-muted transition hover:bg-raised hover:text-strong active:scale-90"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-raised hover:text-strong active:scale-90"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -229,7 +229,7 @@ export default function ConsensusView() {
               onClick={() => void copy()}
               aria-label={t('consensus.copy')}
               title={t('consensus.copy')}
-              className="rounded-lg p-2 text-muted transition hover:bg-raised hover:text-strong active:scale-90"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-raised hover:text-strong active:scale-90"
             >
               {copied ? (
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -244,7 +244,7 @@ export default function ConsensusView() {
             </button>
             <button
               onClick={newDebate}
-              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-strong transition hover:border-faint active:scale-95"
+              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-strong transition hover:border-faint hover:bg-raised/60 active:scale-95"
             >
               {t('app.newDebate')}
             </button>

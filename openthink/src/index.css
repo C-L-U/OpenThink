@@ -59,6 +59,28 @@ body {
   @apply font-sans antialiased;
   background-color: rgb(var(--c-bg));
   color: rgb(var(--c-text));
+  /* Soft cross-fade when the theme flips the CSS variables. */
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+/* Emerald-tinted text selection, slightly stronger on the light theme. */
+::selection {
+  background: rgb(16 185 129 / 0.28);
+}
+:root.light ::selection {
+  background: rgb(16 185 129 / 0.35);
+}
+
+/* Accessible keyboard-focus ring; text fields keep their border-based focus. */
+:focus-visible {
+  outline: 2px solid rgb(16 185 129 / 0.45);
+  outline-offset: 1px;
+}
+:where(input, textarea):focus-visible {
+  outline: none;
 }
 
 /* Minimal scrollbars */
@@ -76,6 +98,7 @@ body {
 *::-webkit-scrollbar-thumb {
   background: rgb(var(--c-faint));
   border-radius: 3px;
+  transition: background-color 0.2s ease;
 }
 *::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--c-muted));

@@ -28,7 +28,7 @@ export default function ModelChips({ compact }: { compact?: boolean }) {
             onClick={() => toggleParticipant(provider, model)}
             disabled={running}
             title={t('chips.remove', { name: p.name, model })}
-            className={`group flex items-center gap-1.5 rounded-full border border-edge bg-raised/70 font-medium text-strong transition hover:border-red-900/70 hover:text-strong active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 ${
+            className={`group flex items-center gap-1.5 rounded-full border border-edge bg-raised/70 font-medium text-strong transition duration-200 hover:border-red-900/70 hover:text-strong active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 ${
               compact ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs'
             }`}
           >
@@ -48,7 +48,7 @@ export default function ModelChips({ compact }: { compact?: boolean }) {
         onClick={() => setSettingsOpen(true)}
         disabled={running}
         title={t('chips.addTitle')}
-        className={`flex items-center gap-1 rounded-full border border-dashed border-edge font-medium text-muted transition hover:border-faint hover:text-strong active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`flex items-center gap-1 rounded-full border border-dashed border-edge font-medium text-muted transition duration-200 hover:border-faint hover:text-strong active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
           compact ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs'
         }`}
       >

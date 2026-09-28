@@ -197,7 +197,7 @@ export default function App() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <header className="z-10 flex items-center justify-between gap-4 border-b border-edge/60 bg-base/80 px-5 py-3 backdrop-blur">
-        <span className="flex shrink-0 items-center gap-2.5 text-sm font-semibold tracking-tight text-strong">
+        <span className="flex shrink-0 select-none items-center gap-2.5 text-sm font-semibold tracking-tight text-strong">
           Open<span className="text-emerald-400">Think</span>
           <BackendStatusDot />
         </span>
@@ -235,34 +235,40 @@ export default function App() {
       {idle ? (
         /* ---- Idle: centered hero ---- */
         <main className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-16 pt-10">
-          {/* Soft glow backdrop */}
+          {/* Soft glow backdrop: two offset accent blobs, subtle in both themes */}
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/3 h-72 w-[36rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl"
+            className="pointer-events-none absolute left-[45%] top-[30%] h-72 w-[34rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl"
           />
-          <h1 className="mb-2 text-4xl font-semibold tracking-tight text-strong">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-[58%] top-[42%] h-56 w-96 max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl"
+          />
+          <h1 className="mb-2 text-4xl font-semibold tracking-tight text-strong animate-rise">
             Open<span className="text-emerald-400">Think</span>
           </h1>
-          <p className="mb-8 text-muted">{t('app.tagline')}</p>
+          <p className="mb-8 text-muted animate-rise [animation-delay:75ms]">{t('app.tagline')}</p>
           <OfflineBanner />
-          <InputBar centered />
-          <p className="mt-3 text-center text-xs text-faint">
+          <div className="flex w-full justify-center animate-rise [animation-delay:150ms]">
+            <InputBar centered />
+          </div>
+          <p className="mt-3 text-center text-xs text-faint animate-rise [animation-delay:200ms]">
             {t('app.pressToFocus')}{' '}
             <kbd className="rounded border border-edge px-1 py-0.5 font-sans text-[10px] text-muted">/</kbd>{' '}
             {t('app.pressToFocusAfter')}
           </p>
-          <div className="mt-5">
+          <div className="mt-5 animate-rise [animation-delay:250ms]">
             <ModelChips />
           </div>
-          <div className="mt-4">
+          <div className="mt-4 animate-rise [animation-delay:325ms]">
             <ChadToggle />
           </div>
-          <div className="mt-7 flex max-w-2xl flex-wrap items-center justify-center gap-2">
+          <div className="mt-7 flex max-w-2xl flex-wrap items-center justify-center gap-2 animate-rise [animation-delay:400ms]">
             {suggestions.map((s) => (
               <button
                 key={s}
                 onClick={() => void startDebate(s)}
-                className="rounded-full border border-edge bg-panel px-3.5 py-1.5 text-xs text-muted transition hover:border-faint hover:text-strong active:scale-95"
+                className="rounded-full border border-edge bg-panel px-3.5 py-1.5 text-xs text-muted transition hover:-translate-y-0.5 hover:border-faint hover:text-strong hover:shadow-md hover:shadow-black/25 active:scale-95"
               >
                 {s}
               </button>
