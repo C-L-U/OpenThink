@@ -9,7 +9,6 @@ export type DebateEvent =
   | { type: 'consensus'; content: string; converged: boolean; rounds_used: number }
   | { type: 'done' }
   | { type: 'error'; message: string };
-
 // Relative base: the Vite dev proxy forwards /api → localhost:8000, and in
 // production FastAPI serves the built frontend same-origin.
 const API_BASE = '/api';
