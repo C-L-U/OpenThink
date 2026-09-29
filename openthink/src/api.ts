@@ -1,5 +1,4 @@
 import type { ProviderId, ProviderInfo, RoundSnapshot } from './types';
-
 export type DebateEvent =
   | { type: 'round_start'; round: number; kind: 'initial' | 'debate'; max_rounds: number }
   | { type: 'model_response'; round: number; model: string; content: string; duration_ms: number; stance?: string }
