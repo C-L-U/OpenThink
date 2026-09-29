@@ -33,7 +33,6 @@ async function errorMessage(response: Response): Promise<string> {
   if (response.status === 429) return 'Rate limit exceeded — wait a minute and try again.';
   return `Backend error ${response.status}`;
 }
-
 /** Fetches the dynamic provider registry. Throws on network/HTTP errors. */
 export async function fetchProviders(): Promise<ProviderInfo[]> {
   let response: Response;
@@ -46,7 +45,6 @@ export async function fetchProviders(): Promise<ProviderInfo[]> {
   const data = (await response.json()) as { providers: ProviderInfo[] };
   return data.providers;
 }
-
 export type ValidateKeyResult =
   | { ok: true; latency_ms: number; model: string }
   | { ok: false; error: string };
@@ -79,7 +77,6 @@ export async function validateKey(
   }
   return (await response.json()) as ValidateKeyResult;
 }
-
 /**
  * Streams a debate via SSE-over-fetch (EventSource can't send custom headers).
  * Parses `data: <json>\n\n` frames incrementally and invokes onEvent per event.
