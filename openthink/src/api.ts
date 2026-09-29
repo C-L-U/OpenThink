@@ -101,7 +101,6 @@ export async function streamDebate(
       headers[`x-api-key-${id}`] = key.trim();
     }
   }
-
   let response: Response;
   try {
     response = await fetch(`${API_BASE}/debate`, {
