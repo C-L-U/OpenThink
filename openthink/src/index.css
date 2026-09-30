@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @layer utilities {
+
   /* Subtle entrance for streamed-in cards and notices. */
   .animate-rise {
     animation: rise 0.35s ease-out both;
@@ -14,6 +15,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -28,14 +30,22 @@
 
 /* Theme tokens as raw RGB channels so Tailwind can apply opacity modifiers. */
 :root {
-  --c-bg: 23 23 23;        /* #171717 */
-  --c-panel: 27 27 27;     /* #1b1b1b */
-  --c-inset: 20 20 20;     /* #141414 */
-  --c-raised: 47 47 47;    /* #2f2f2f */
-  --c-edge: 38 38 38;      /* neutral-800 */
-  --c-text: 244 244 245;   /* zinc-100 */
-  --c-muted: 161 161 170;  /* zinc-400 */
-  --c-faint: 82 82 91;     /* zinc-600 */
+  --c-bg: 23 23 23;
+  /* #171717 */
+  --c-panel: 27 27 27;
+  /* #1b1b1b */
+  --c-inset: 20 20 20;
+  /* #141414 */
+  --c-raised: 47 47 47;
+  /* #2f2f2f */
+  --c-edge: 38 38 38;
+  /* neutral-800 */
+  --c-text: 244 244 245;
+  /* zinc-100 */
+  --c-muted: 161 161 170;
+  /* zinc-400 */
+  --c-faint: 82 82 91;
+  /* zinc-600 */
 }
 
 :root.light {
@@ -70,6 +80,7 @@ body {
 ::selection {
   background: rgb(16 185 129 / 0.28);
 }
+
 :root.light ::selection {
   background: rgb(16 185 129 / 0.35);
 }
@@ -79,6 +90,7 @@ body {
   outline: 2px solid rgb(16 185 129 / 0.45);
   outline-offset: 1px;
 }
+
 :where(input, textarea):focus-visible {
   outline: none;
 }
@@ -88,18 +100,22 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--c-faint)) transparent;
 }
+
 *::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
 *::-webkit-scrollbar-thumb {
   background: rgb(var(--c-faint));
   border-radius: 3px;
   transition: background-color 0.2s ease;
 }
+
 *::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--c-muted));
 }
