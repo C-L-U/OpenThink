@@ -51,7 +51,6 @@ interface RegistryState {
   backendOnline: boolean | null;
   loadProviders: () => Promise<void>;
 }
-
 interface DebateState {
   status: DebateStatus;
   query: string;
