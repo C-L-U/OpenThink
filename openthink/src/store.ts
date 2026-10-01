@@ -43,7 +43,6 @@ interface SettingsState {
   setLanguage: (language: Language) => void;
   setChadMode: (on: boolean) => void;
 }
-
 interface RegistryState {
   /** Dynamic provider registry (starts as the static fallback). */
   providers: ProviderInfo[];
@@ -325,13 +324,13 @@ export const useStore = create<OpenThinkState>()(
               const rounds = s.rounds.map((r) =>
                 r.round === event.round
                   ? {
-                      ...r,
-                      evaluation: {
-                        consensus: event.consensus,
-                        reason: event.reason,
-                        ...(event.judge ? { judge: event.judge } : {}),
-                      },
-                    }
+                    ...r,
+                    evaluation: {
+                      consensus: event.consensus,
+                      reason: event.reason,
+                      ...(event.judge ? { judge: event.judge } : {}),
+                    },
+                  }
                   : r,
               );
               return { rounds };
