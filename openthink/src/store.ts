@@ -137,7 +137,6 @@ function upsertResponse(
   next[idx] = { ...round, responses };
   return next;
 }
-
 export const useStore = create<OpenThinkState>()(
   persist(
     (set, get) => ({
