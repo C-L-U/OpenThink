@@ -78,7 +78,6 @@ interface DebateState {
   reset: () => void;
   dismissError: () => void;
 }
-
 export type KeyValidation =
   | { ok: true; latencyMs: number; model: string }
   | { ok: false; error: string };
