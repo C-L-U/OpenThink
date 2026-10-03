@@ -92,9 +92,7 @@ interface UiState {
   testApiKey: (id: ProviderId) => Promise<void>;
   requestInputFocus: () => void;
 }
-
 type OpenThinkState = SettingsState & DebateState & UiState & RegistryState;
-
 const initialDebateState = {
   status: 'idle' as DebateStatus,
   query: '',
