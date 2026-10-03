@@ -179,7 +179,6 @@ export const useStore = create<OpenThinkState>()(
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
       setChadMode: (on) => set({ chadMode: on }),
-
       // ---- provider registry slice ----
       providers: PROVIDERS,
       providersLoaded: false,
