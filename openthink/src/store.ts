@@ -120,7 +120,6 @@ function mergeResponse(prev: ModelResponse, next: ModelResponse): ModelResponse 
   }
   return merged;
 }
-
 function upsertResponse(
   rounds: DebateRound[],
   roundNum: number,
