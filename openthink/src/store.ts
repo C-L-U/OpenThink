@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import { fetchProviders, streamDebate, validateKey, type DebateEvent } from './api';
 import type { DebateRound, DebateStatus, ModelResponse, ParticipantId, ProviderId, ProviderInfo, RoundSnapshot } from './types';
 import { PROVIDERS, lookupProvider, makeParticipant, parseParticipant } from './types';
-
 const ALL_PROVIDERS: ProviderId[] = PROVIDERS.map((p) => p.id);
 /** Default roster: every provider's default model, one participant each. */
 const defaultParticipants = (): ParticipantId[] =>
