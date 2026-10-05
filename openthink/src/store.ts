@@ -14,7 +14,6 @@ const emptyKeys = (): Record<ProviderId, string> =>
 
 export type Theme = 'dark' | 'light';
 export type Language = 'es' | 'en';
-
 /** Detect the browser's preferred language once (Spanish vs. English). */
 const detectLanguage = (): Language =>
   typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('es')
