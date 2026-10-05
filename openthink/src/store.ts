@@ -5,7 +5,6 @@ import type { DebateRound, DebateStatus, ModelResponse, ParticipantId, ProviderI
 import { PROVIDERS, lookupProvider, makeParticipant, parseParticipant } from './types';
 
 const ALL_PROVIDERS: ProviderId[] = PROVIDERS.map((p) => p.id);
-
 /** Default roster: every provider's default model, one participant each. */
 const defaultParticipants = (): ParticipantId[] =>
   PROVIDERS.map((p) => makeParticipant(p.id, p.default_model));
