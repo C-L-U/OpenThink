@@ -260,7 +260,6 @@ export const useStore = create<OpenThinkState>()(
             resumeFrom,
           );
 
-
           // Stream ended; if we never saw done/consensus, close out gracefully.
           set((s) => (s.status === 'running' ? { status: s.pauseIntent ? 'paused' : 'done' } : s));
         } catch (err) {
