@@ -250,7 +250,6 @@ export const useStore = create<OpenThinkState>()(
         const { participants, apiKeys, chadMode } = get();
         const payload = participants.map((pid) => parseParticipant(pid));
         try {
-
           await streamDebate(
             query,
             payload,
