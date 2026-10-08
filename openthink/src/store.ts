@@ -244,6 +244,7 @@ export const useStore = create<OpenThinkState>()(
         });
         await get()._runStream(query, controller, resumeFrom);
       },
+
       // Shared stream driver for startDebate/resumeDebate: consumes events into
       // the store and settles the final status (paused/done/error).
       _runStream: async (query, controller, resumeFrom) => {
