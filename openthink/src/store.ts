@@ -219,7 +219,6 @@ export const useStore = create<OpenThinkState>()(
         set({ pauseIntent: true });
         get().abortController?.abort();
       },
-
       resumeDebate: async () => {
         const { status, query, participants, rounds } = get();
         if (status !== 'paused' || !query || participants.length === 0) return;
