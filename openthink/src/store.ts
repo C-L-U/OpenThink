@@ -209,7 +209,6 @@ export const useStore = create<OpenThinkState>()(
         set({ ...initialDebateState, status: 'running', query: trimmed, abortController: controller });
         await get()._runStream(trimmed, controller);
       },
-
       stopDebate: () => {
         get().abortController?.abort();
       },
