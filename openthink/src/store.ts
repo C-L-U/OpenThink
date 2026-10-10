@@ -275,7 +275,6 @@ export const useStore = create<OpenThinkState>()(
           set({ abortController: null, pauseIntent: false });
         }
       },
-
       applyEvent: (event) =>
         set((s) => {
           switch (event.type) {
