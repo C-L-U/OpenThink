@@ -213,7 +213,6 @@ export const useStore = create<OpenThinkState>()(
       stopDebate: () => {
         get().abortController?.abort();
       },
-
       pauseDebate: () => {
         if (get().status !== 'running') return;
         set({ pauseIntent: true });
