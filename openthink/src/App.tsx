@@ -112,7 +112,6 @@ function BackendStatusDot() {
     />
   );
 }
-
 export default function App() {
   const status = useStore((s) => s.status);
   const query = useStore((s) => s.query);
