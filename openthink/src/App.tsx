@@ -129,7 +129,6 @@ export default function App() {
   const reset = useStore((s) => s.reset);
   const t = useT();
   const suggestions = useMessages()['app.suggestions'];
-
   const idle = status === 'idle' && rounds.length === 0;
 
   // Apply the persisted theme to <html> (the `light` class flips the CSS
