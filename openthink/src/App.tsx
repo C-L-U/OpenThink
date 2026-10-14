@@ -130,7 +130,6 @@ export default function App() {
   const t = useT();
   const suggestions = useMessages()['app.suggestions'];
   const idle = status === 'idle' && rounds.length === 0;
-
   // Apply the persisted theme to <html> (the `light` class flips the CSS
   // variables) and keep the document language in sync for assistive tech.
   useEffect(() => {
