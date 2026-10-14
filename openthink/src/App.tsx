@@ -91,7 +91,6 @@ function MissingKeysNotice() {
     </div>
   );
 }
-
 /** Small colored dot reflecting backend connectivity. */
 function BackendStatusDot() {
   const backendOnline = useStore((s) => s.backendOnline);
