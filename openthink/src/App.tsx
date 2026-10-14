@@ -143,7 +143,6 @@ export default function App() {
   useEffect(() => {
     void loadProviders();
   }, [loadProviders]);
-
   // Keep the timeline pinned to the bottom as events stream in — but never
   // yank the view down while the user has scrolled up to read.
   useEffect(() => {
