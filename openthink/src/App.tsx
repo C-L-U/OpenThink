@@ -219,7 +219,6 @@ export default function App() {
           </button>
         </span>
       </header>
-
       {idle ? (
         /* ---- Idle: centered hero ---- */
         <main className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-16 pt-10">
