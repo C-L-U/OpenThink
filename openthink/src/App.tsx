@@ -43,6 +43,7 @@ function ErrorBanner() {
   );
 }
 
+
 /** Red inline notice when the backend is unreachable, with one-click retry. */
 function OfflineBanner() {
   const backendOnline = useStore((s) => s.backendOnline);
