@@ -149,7 +149,6 @@ export default function App() {
     const el = scrollRef.current;
     if (el && pinnedRef.current) el.scrollTop = el.scrollHeight;
   }, [rounds, consensus, status]);
-
   const onScroll = () => {
     const el = scrollRef.current;
     if (el) pinnedRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
