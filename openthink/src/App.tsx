@@ -138,7 +138,6 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
-
   // Fetch the dynamic provider registry from the backend once on mount
   // (falls back to the static registry and flags offline mode if it fails).
   useEffect(() => {
