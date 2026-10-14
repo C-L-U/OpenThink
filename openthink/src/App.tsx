@@ -65,7 +65,6 @@ function OfflineBanner() {
     </div>
   );
 }
-
 /** Amber inline notice when some active providers have no API key configured. */
 function MissingKeysNotice() {
   const participants = useStore((s) => s.participants);
