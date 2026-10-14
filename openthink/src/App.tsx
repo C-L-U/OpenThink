@@ -181,7 +181,6 @@ export default function App() {
     reset();
     requestInputFocus();
   };
-
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
