@@ -155,7 +155,6 @@ export default function App() {
     const el = scrollRef.current;
     if (el) pinnedRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   };
-
   // Global keyboard shortcuts: "/" or Ctrl+K focus input, Ctrl+, opens settings.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
