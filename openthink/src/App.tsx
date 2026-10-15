@@ -296,7 +296,6 @@ export default function App() {
           </div>
         </>
       )}
-
       <SettingsDrawer />
     </div>
   );
