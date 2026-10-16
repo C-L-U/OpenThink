@@ -10,6 +10,7 @@ import { useStore } from './store';
 import { useMessages, useT } from './i18n';
 import { lookupProvider, parseParticipant } from './types';
 
+
 function ErrorBanner() {
   const error = useStore((s) => s.error);
   const dismissError = useStore((s) => s.dismissError);
