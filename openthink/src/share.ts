@@ -11,7 +11,6 @@ function cleanMarkdown(text: string): string {
     .replace(/^- /gm, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1');
 }
-
 /** First non-empty paragraph, capped at ~2 lines, whitespace-collapsed. */
 function excerpt(text: string): string {
   const firstParagraph =
