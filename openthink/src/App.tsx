@@ -16,6 +16,7 @@ function ErrorBanner() {
   const status = useStore((s) => s.status);
   const startDebate = useStore((s) => s.startDebate);
   const t = useT();
+
   if (!error) return null;
   return (
     <div className="mx-auto mb-4 flex w-full max-w-3xl items-start justify-between gap-3 rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-3 animate-rise">
