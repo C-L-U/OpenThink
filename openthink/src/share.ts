@@ -20,7 +20,6 @@ function excerpt(text: string): string {
       .find(Boolean) ?? '';
   return firstParagraph.split('\n').slice(0, 2).join(' ').replace(/\s+/g, ' ').trim();
 }
-
 /** First non-empty line (Chad verdicts lead with a punchy one-liner). */
 function firstLine(text: string): string {
   const line = cleanMarkdown(text)
