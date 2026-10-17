@@ -28,7 +28,6 @@ function firstLine(text: string): string {
     .find(Boolean);
   return (line ?? '').replace(/\s+/g, ' ');
 }
-
 /** Truncate to maxLen on a word boundary when possible, ending with an ellipsis. */
 function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
