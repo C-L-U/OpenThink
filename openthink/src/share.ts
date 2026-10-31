@@ -20,7 +20,6 @@ function excerpt(text: string): string {
       .find(Boolean) ?? '';
   return firstParagraph.split('\n').slice(0, 2).join(' ').replace(/\s+/g, ' ').trim();
 }
-
 /** First non-empty line (Chad verdicts lead with a punchy one-liner). */
 function firstLine(text: string): string {
   const line = cleanMarkdown(text)
@@ -37,7 +36,6 @@ function truncate(text: string, maxLen: number): string {
   const lastSpace = cut.lastIndexOf(' ');
   return (lastSpace > maxLen / 2 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 }
-
 /**
  * Fit two segments into a shared char budget. The shorter side keeps its full
  * length; the longer side absorbs whatever remains. Result: a+b ≤ budget.
