@@ -30,7 +30,6 @@ export interface DebateRound {
   responses: ModelResponse[];
   evaluation?: { consensus: boolean; reason: string; judge?: ParticipantId };
 }
-
 export type DebateStatus = 'idle' | 'running' | 'paused' | 'done' | 'error';
 
 /** A completed round of a paused debate, sent back as `resume_from` on resume. */
