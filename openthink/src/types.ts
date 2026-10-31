@@ -14,7 +14,6 @@ export function parseParticipant(pid: ParticipantId): { provider: ProviderId; mo
   const idx = pid.indexOf(':');
   return idx === -1 ? { provider: pid, model: '' } : { provider: pid.slice(0, idx), model: pid.slice(idx + 1) };
 }
-
 /** Short label for a model id: strips gateway prefixes ("anthropic/claude-sonnet-5" → "claude-sonnet-5"). */
 export const shortModel = (model: string): string => model.split('/').pop() ?? model;
 
