@@ -25,7 +25,6 @@ export interface ModelResponse {
   /** Debate rounds only: "CONCEDED to X" | "MAINTAINED" | "REVISED". */
   stance?: string;
 }
-
 export interface DebateRound {
   round: number;
   kind: 'initial' | 'debate';
