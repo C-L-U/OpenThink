@@ -16,7 +16,6 @@ const detectLanguage = (): Language =>
   typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('es')
     ? 'es'
     : 'en';
-
 interface SettingsState {
   apiKeys: Record<ProviderId, string>;
   /** Debate roster: "provider:model" entries; several may share a provider. */
