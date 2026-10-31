@@ -47,7 +47,6 @@ function fitPair(a: string, b: string, budget: number): [string, string] {
   if (b.length <= half) return [truncate(a, budget - b.length), b];
   return [truncate(a, half), truncate(b, budget - half)];
 }
-
 export interface ShareInput {
   query: string;
   content: string;
@@ -57,7 +56,6 @@ export interface ShareInput {
   chadMode: boolean;
   lang: Lang;
 }
-
 /**
  * Build the tweet text for a finished debate. Layout:
  *   "question"\n\nexcerpt\n\ntail
