@@ -7,10 +7,8 @@ const ALL_PROVIDERS: ProviderId[] = PROVIDERS.map((p) => p.id);
 /** Default roster: every provider's default model, one participant each. */
 const defaultParticipants = (): ParticipantId[] =>
   PROVIDERS.map((p) => makeParticipant(p.id, p.default_model));
-
 const emptyKeys = (): Record<ProviderId, string> =>
   Object.fromEntries(ALL_PROVIDERS.map((id) => [id, '']));
-
 export type Theme = 'dark' | 'light';
 export type Language = 'es' | 'en';
 /** Detect the browser's preferred language once (Spanish vs. English). */
