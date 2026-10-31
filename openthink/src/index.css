@@ -30,15 +30,15 @@
 
 /* Theme tokens as raw RGB channels so Tailwind can apply opacity modifiers. */
 :root {
-  --c-bg: 23 23 23;
+  --c-bg: 19 25 27;
   /* #171717 */
-  --c-panel: 27 27 27;
+  --c-panel: 26 33 35;
   /* #1b1b1b */
-  --c-inset: 20 20 20;
+  --c-inset: 17 23 25;
   /* #141414 */
-  --c-raised: 47 47 47;
+  --c-raised: 38 47 48;
   /* #2f2f2f */
-  --c-edge: 38 38 38;
+  --c-edge: 54 66 66;
   /* neutral-800 */
   --c-text: 244 244 245;
   /* zinc-100 */
@@ -119,3 +119,10 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--c-muted));
 }
+/* Three overlapping forms suggest independent perspectives meeting. */
+.hero-mark { position: relative; width: 62px; height: 48px; }
+.hero-mark span { position: absolute; top: 7px; width: 34px; height: 34px; border: 1px solid rgb(110 190 166 / .8); border-radius: 50%; }
+.hero-mark span:nth-child(1) { left: 0; }
+.hero-mark span:nth-child(2) { left: 14px; }
+.hero-mark span:nth-child(3) { left: 28px; }
+:root.light .hero-mark span { border-color: rgb(4 120 87 / .7); }

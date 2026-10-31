@@ -10,9 +10,9 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // Forward API calls to the local FastAPI backend during development.
+      // Support same-origin API requests during development.
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://engine.openthink.clu.run',
         changeOrigin: true,
       },
     },

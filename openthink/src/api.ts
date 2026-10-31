@@ -8,9 +8,9 @@ export type DebateEvent =
   | { type: 'consensus'; content: string; converged: boolean; rounds_used: number }
   | { type: 'done' }
   | { type: 'error'; message: string };
-// Relative base: the Vite dev proxy forwards /api → localhost:8000, and in
-// production FastAPI serves the built frontend same-origin.
-const API_BASE = '/api';
+// Set VITE_BACKEND_URL to an empty string for a same-origin deployment.
+const backendUrl = import.meta.env.VITE_BACKEND_URL ?? 'https://engine.openthink.clu.run';
+const API_BASE = `${backendUrl.replace(/\/+$/, '')}/api`;
 /** Extracts a readable message from an error response (handles 429 + 422 detail). */
 async function errorMessage(response: Response): Promise<string> {
   try {

@@ -15,15 +15,10 @@ from fastapi.testclient import TestClient
 from app import main, prompts
 from app.main import app
 from app.providers import PROVIDERS
-
-
 def answer(position):
     return f"Some reasoning.\nFINAL POSITION: {position}"
-
-
 def make_fake(answers):
     """answers: {"provider:model": [answers by round]} — see test_debate.py."""
-
     round_counters = {}
 
     async def fake(provider_id, api_key, system_prompt, user_prompt, model=None, client=None):

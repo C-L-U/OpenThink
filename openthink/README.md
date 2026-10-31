@@ -14,8 +14,15 @@ pnpm lint         # oxlint
 pnpm preview      # preview the production build
 ```
 
-The dev server expects the FastAPI backend running on `localhost:8000`
-(see `backend/`). In production the backend serves `dist/` directly, same-origin.
+The frontend connects by default to `https://engine.openthink.clu.run`. The backend must allow the exact frontend origin through CORS, including `http://localhost:5173` when developing locally.
+
+For separate Coolify deployments, set the frontend build-time variable
+`VITE_BACKEND_URL=https://backend.example.com` to the public backend origin
+(without `/api`), then rebuild and redeploy the frontend. Set the backend
+variable `OPENTHINK_CORS_ORIGINS=https://frontend.example.com` to the exact
+public frontend origin and redeploy the backend. Multiple allowed origins can
+be separated by commas. Verify `https://backend.example.com/api/health` returns
+`{"status":"ok"}`. Set `VITE_BACKEND_URL` to an empty string for same-origin deployments.
 
 ## Structure
 
@@ -36,7 +43,7 @@ src/
 ```
 
 API keys live only in memory for the browser session — they are never written to
-`localStorage` and are sent solely as request headers to your local backend.
+`localStorage` and are sent solely as request headers to the configured backend.
 
 ## License
 

@@ -50,12 +50,7 @@ function OfflineBanner() {
   if (backendOnline !== false) return null;
   return (
     <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-300/90 animate-rise">
-      <span>
-        {t('app.offlineBanner')}{' '}
-        <code className="rounded bg-red-950/60 px-1.5 py-0.5 font-mono text-xs">
-          uvicorn app.main:app --port 8000
-        </code>
-      </span>
+      <span>{t('app.offlineBanner')}</span>
       <button
         onClick={() => void loadProviders()}
         className="shrink-0 rounded-md border border-red-800/70 px-2.5 py-1 text-xs font-medium text-red-300 transition hover:bg-red-900/30 hover:text-red-200 active:scale-95"
@@ -184,7 +179,7 @@ export default function App() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <header className="z-10 flex items-center justify-between gap-4 border-b border-edge/60 bg-base/80 px-5 py-3 backdrop-blur">
+      <header className="z-10 flex items-center justify-between gap-4 border-b border-edge/70 bg-base/90 px-5 py-4 backdrop-blur sm:px-8">
         <span className="flex shrink-0 select-none items-center gap-2.5 text-sm font-semibold tracking-tight text-strong">
           Open<span className="text-emerald-400">Think</span>
           <BackendStatusDot />
@@ -222,19 +217,11 @@ export default function App() {
       {idle ? (
         /* ---- Idle: centered hero ---- */
         <main className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-16 pt-10">
-          {/* Soft glow backdrop: two offset accent blobs, subtle in both themes */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-[45%] top-[30%] h-72 w-[34rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-[58%] top-[42%] h-56 w-96 max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl"
-          />
-          <h1 className="mb-2 text-4xl font-semibold tracking-tight text-strong animate-rise">
-            Open<span className="text-emerald-400">Think</span>
+          <div aria-hidden="true" className="hero-mark mb-8"><span /><span /><span /></div>
+          <h1 className="mb-3 text-center text-5xl font-medium tracking-[-0.055em] text-strong sm:text-6xl">
+            OpenThink
           </h1>
-          <p className="mb-8 text-muted animate-rise [animation-delay:75ms]">{t('app.tagline')}</p>
+          <p className="mb-10 text-center text-base text-muted sm:text-lg">{t('app.tagline')}</p>
           <OfflineBanner />
           <div className="flex w-full justify-center animate-rise [animation-delay:150ms]">
             <InputBar centered />
@@ -255,13 +242,13 @@ export default function App() {
               <button
                 key={s}
                 onClick={() => void startDebate(s)}
-                className="rounded-full border border-edge bg-panel px-3.5 py-1.5 text-xs text-muted transition hover:-translate-y-0.5 hover:border-faint hover:text-strong hover:shadow-md hover:shadow-black/25 active:scale-95"
+                className="rounded-full border border-edge bg-panel/70 px-4 py-2 text-xs text-muted transition hover:border-faint hover:text-strong"
               >
                 {s}
               </button>
             ))}
           </div>
-          <p className="absolute bottom-4 text-[11px] text-faint">crafted by C-L-U</p>
+          <p className="mt-12 text-[11px] text-faint">crafted by C-L-U</p>
         </main>
       ) : (
         /* ---- Running / done: scrollable column + sticky input ---- */

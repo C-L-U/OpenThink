@@ -13,8 +13,8 @@ const en = {
   'app.newDebate': 'New debate',
   'app.backendChecking': 'Checking backend…',
   'app.backendOnline': 'Backend connected',
-  'app.backendOffline': 'Backend offline — click settings to retry or start uvicorn',
-  'app.offlineBanner': 'Cannot reach the OpenThink backend — start it with',
+  'app.backendOffline': 'Backend offline. Retry the connection.',
+  'app.offlineBanner': 'Cannot reach the OpenThink backend. Check the server and try again.',
   'app.offlineReconnect': 'Reconnect',
   'app.missingKeys': 'No API key configured for {names} — their models will report errors.',
   'app.missingKeysSuffix': 'to add keys.',
@@ -114,7 +114,7 @@ const en = {
   'settings.securityStep1':
     "Keys live **only in this tab's memory** — never in localStorage, cookies, or any file.",
   'settings.securityStep2':
-    'They travel as request headers **only to your own local backend** (localhost:8000).',
+    'They travel as request headers **only to the configured backend**.',
   'settings.securityStep3':
     "The backend holds them in memory for the request and forwards them **only to each provider's official API** to authenticate.",
   'settings.securityStep4':
@@ -155,8 +155,8 @@ const es: typeof en = {
   'app.newDebate': 'Nuevo debate',
   'app.backendChecking': 'Comprobando el backend…',
   'app.backendOnline': 'Backend conectado',
-  'app.backendOffline': 'Backend sin conexión — abre los ajustes para reintentar o inicia uvicorn',
-  'app.offlineBanner': 'No se puede conectar con el backend de OpenThink — inícialo con',
+  'app.backendOffline': 'Backend sin conexión. Vuelve a intentar la conexión.',
+  'app.offlineBanner': 'No se puede conectar con el backend de OpenThink. Comprueba el servidor y vuelve a intentarlo.',
   'app.offlineReconnect': 'Reconectar',
   'app.missingKeys': 'No hay clave API configurada para {names} — sus modelos devolverán errores.',
   'app.missingKeysSuffix': 'para añadir claves.',
@@ -256,7 +256,7 @@ const es: typeof en = {
   'settings.securityStep1':
     'Las claves viven **solo en la memoria de esta pestaña** — nunca en localStorage, cookies ni ningún archivo.',
   'settings.securityStep2':
-    'Viajan como cabeceras de petición **solo a tu propio backend local** (localhost:8000).',
+    'Viajan como cabeceras de petición **solo al backend configurado**.',
   'settings.securityStep3':
     'El backend las mantiene en memoria durante la petición y las reenvía **solo a la API oficial de cada proveedor** para autenticarse.',
   'settings.securityStep4':

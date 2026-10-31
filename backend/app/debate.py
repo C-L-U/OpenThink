@@ -187,7 +187,7 @@ async def _run_round(
             events.append(event)
         else:
             # Full detail stays in the server log; the client gets a safe message.
-            logger.warning("participant %s failed in round %d: %s", pid, round_no, res["error"])
+            logger.warning("participant %s failed in round %d: %s", pid, round_no, _public_error(res["error"]))
             events.append({
                 "type": "model_error", "round": round_no, "model": pid,
                 "error": _public_error(res["error"]),
@@ -256,7 +256,7 @@ async def _check_consensus(
             agreed, reason = await _judge_once(client, query, judge_pid, spec, keys, positions)
             return agreed, reason, judge_pid
         except Exception:
-            logger.warning("judge %s failed in round %d", judge_pid, round_no, exc_info=True)
+            logger.warning("judge %s failed in round %d", judge_pid, round_no)
     return False, "Judge unavailable; treating as no consensus.", None
 
 

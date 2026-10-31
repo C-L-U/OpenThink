@@ -50,7 +50,7 @@ export default function InputBar({ centered }: { centered?: boolean }) {
 
   return (
     <div className={centered ? 'w-full max-w-2xl' : 'w-full max-w-3xl mx-auto'}>
-      <div className="relative flex items-end rounded-2xl border border-edge bg-raised shadow-lg transition-[border-color,box-shadow] focus-within:border-emerald-600/40 focus-within:shadow-[0_0_28px_-8px_rgb(16_185_129/0.35)]">
+      <div className="relative flex items-end rounded-2xl border border-edge bg-panel shadow-[0_16px_45px_-24px_rgba(0,0,0,0.5)] transition-[border-color,box-shadow] focus-within:border-emerald-500/60 focus-within:shadow-[0_16px_45px_-24px_rgba(0,0,0,0.5)]">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -63,7 +63,7 @@ export default function InputBar({ centered }: { centered?: boolean }) {
           onKeyDown={onKeyDown}
           placeholder={t('input.placeholder')}
           disabled={running}
-          className="w-full resize-none bg-transparent px-4 py-4 pr-14 text-[15px] leading-6 text-strong placeholder-faint outline-none disabled:opacity-50"
+          className="w-full resize-none bg-transparent px-5 py-5 pr-14 text-[15px] leading-6 text-strong placeholder-faint outline-none disabled:opacity-50"
         />
         <button
           onClick={submit}
