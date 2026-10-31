@@ -16,7 +16,6 @@ export function parseParticipant(pid: ParticipantId): { provider: ProviderId; mo
 }
 /** Short label for a model id: strips gateway prefixes ("anthropic/claude-sonnet-5" → "claude-sonnet-5"). */
 export const shortModel = (model: string): string => model.split('/').pop() ?? model;
-
 export interface ModelResponse {
   model: ParticipantId;
   content: string;
