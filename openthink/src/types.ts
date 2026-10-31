@@ -45,7 +45,6 @@ export interface ProviderInfo {
   default_model: string;
   models: string[];
 }
-
 /** Brand colors live client-side; unknown provider ids get a neutral zinc. */
 export const PROVIDER_COLORS: Record<string, string> = {
   openai: '#10a37f',
