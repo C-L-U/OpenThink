@@ -39,6 +39,7 @@ export interface RoundSnapshot {
   responses: { model: ParticipantId; content: string }[];
 }
 
+
 /** Shape returned by GET /api/providers. */
 export interface ProviderInfo {
   id: ProviderId;
