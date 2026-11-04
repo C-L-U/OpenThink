@@ -99,7 +99,6 @@ const initialDebateState = {
   abortController: null as AbortController | null,
   pauseIntent: false,
 };
-
 /** Merge an incoming response over an existing one (e.g. a re-run round after a
  *  resume): a fresh success clears any previous error, and a fresh error drops
  *  stale content/stance. */
