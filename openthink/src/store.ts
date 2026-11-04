@@ -342,7 +342,6 @@ export const useStore = create<OpenThinkState>()(
 
       reset: () => set({ ...initialDebateState }),
       dismissError: () => set({ error: null }),
-
       // ---- ephemeral UI slice (never persisted) ----
       keyValidation: {},
       keyTesting: {},
